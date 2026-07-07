@@ -1,11 +1,9 @@
-import tkinter as tk
+from logitrack.app import App
 
 
 def main() -> None:
-    root = tk.Tk()
-    root.title("LogiTrack Desktop")
-    root.geometry("800x600")
-    root.mainloop()
+    app = App()
+    app.run()
 
 
 if __name__ == "__main__":
