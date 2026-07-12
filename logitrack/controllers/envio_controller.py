@@ -1,3 +1,6 @@
+import threading
+import time
+
 from logitrack.models.envio import Envio
 
 
@@ -43,3 +46,18 @@ class EnvioController:
 
     def listar(self) -> list[Envio]:
         return list(self._envios)
+
+    def cargar_envios_lento(self, cancel_event: threading.Event) -> list[Envio] | None:
+        for _ in range(25):
+            if cancel_event.is_set():
+                return None
+            time.sleep(0.1)
+        return list(self._envios)
+
+    def buscar_lento(self, termino: str, cancel_event: threading.Event) -> list[Envio] | None:
+        for _ in range(15):
+            if cancel_event.is_set():
+                return None
+            time.sleep(0.1)
+        return self.buscar(termino)
+

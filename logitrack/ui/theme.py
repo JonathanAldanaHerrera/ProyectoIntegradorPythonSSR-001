@@ -67,3 +67,18 @@ def aplicar_tema(style: ttk.Style) -> None:
 
     style.configure("Treeview", font=FUENTE_BASE, rowheight=28)
     style.configure("Treeview.Heading", font=("Segoe UI", 10, "bold"))
+
+    style.configure(
+        "Progreso.Horizontal.TProgressbar",
+        troughcolor="#e0e0e0",
+        background="#1565c0",
+        thickness=6,
+    )
+
+    style.configure(
+        "Cancelar.TButton",
+        font=FUENTE_BASE,
+        foreground=COLOR_ERROR,
+        padding=(8, 4),
+    )
+
