@@ -64,3 +64,5 @@ logitrack/
 ```
 
 ## Screenshot
+![alt text](01-widgets.png)
+![alt text](01-widgets_SaveAndError.png)
