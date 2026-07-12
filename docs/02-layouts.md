@@ -74,10 +74,12 @@ Solo Destinatario y Dirección se expanden proporcionalmente con el espacio disp
 ## Capturas de redimensionamiento
 
 *Layout en tamaño pequeño - Screenshot*
-
+![alt text](files/02-layout_sm.png)
 *Layout en tamaño mediano - Screenshot*
+![alt text](files/02-layout_md.png)
 
 *Layout en tamaño maximizado - Screenshot*
+![alt text](files/02-layout_lg.png)
 
 ## Archivos modificados
 
