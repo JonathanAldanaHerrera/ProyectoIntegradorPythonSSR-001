@@ -7,7 +7,7 @@ from logitrack.ui.theme import (
     PAD_SM, PAD_MD, PAD_LG, ANCHO_PANEL, UMBRAL_RESPONSIVE,
     COLORES_ESTADO, cambiar_tema, obtener_tema_actual,
 )
-from logitrack.views.components import KPICard, StatusBadge, ICONOS_ESTADO
+from logitrack.views.components import KPICard, ScrollableFrame, StatusBadge, ICONOS_ESTADO
 
 
 class MainWindow:
@@ -148,38 +148,46 @@ class MainWindow:
             self.root, text="Nuevo Envío", style="Formulario.TLabelframe"
         )
 
+        scroll = ScrollableFrame(self.panel)
+        scroll.grid(row=0, column=0, sticky="nsew")
+        self.panel.columnconfigure(0, weight=1)
+        self.panel.rowconfigure(0, weight=1)
+
+        p = scroll.interior  # padre para todos los widgets del panel
+        p.columnconfigure(0, weight=1)
+
         fila = 0
 
-        ttk.Label(self.panel, text="Destinatario *").grid(row=fila, column=0, sticky="w", pady=(0, PAD_SM))
+        ttk.Label(p, text="Destinatario *").grid(row=fila, column=0, sticky="w", pady=(0, PAD_SM))
         fila += 1
-        self.entry_destinatario = ttk.Entry(self.panel, textvariable=self.var_destinatario, width=25)
+        self.entry_destinatario = ttk.Entry(p, textvariable=self.var_destinatario, width=25)
         self.entry_destinatario.grid(row=fila, column=0, sticky="ew", pady=(0, PAD_MD))
         fila += 1
 
-        ttk.Label(self.panel, text="Dirección *").grid(row=fila, column=0, sticky="w", pady=(0, PAD_SM))
+        ttk.Label(p, text="Dirección *").grid(row=fila, column=0, sticky="w", pady=(0, PAD_SM))
         fila += 1
-        ttk.Entry(self.panel, textvariable=self.var_direccion, width=25).grid(row=fila, column=0, sticky="ew", pady=(0, PAD_MD))
+        ttk.Entry(p, textvariable=self.var_direccion, width=25).grid(row=fila, column=0, sticky="ew", pady=(0, PAD_MD))
         fila += 1
 
-        ttk.Label(self.panel, text="Tipo").grid(row=fila, column=0, sticky="w", pady=(0, PAD_SM))
+        ttk.Label(p, text="Tipo").grid(row=fila, column=0, sticky="w", pady=(0, PAD_SM))
         fila += 1
-        ttk.Combobox(self.panel, textvariable=self.var_tipo, values=self.controller.tipos, state="readonly", width=22).grid(
+        ttk.Combobox(p, textvariable=self.var_tipo, values=self.controller.tipos, state="readonly", width=22).grid(
             row=fila, column=0, sticky="ew", pady=(0, PAD_MD))
         fila += 1
 
-        ttk.Label(self.panel, text="Estado").grid(row=fila, column=0, sticky="w", pady=(0, PAD_SM))
+        ttk.Label(p, text="Estado").grid(row=fila, column=0, sticky="w", pady=(0, PAD_SM))
         fila += 1
-        ttk.Combobox(self.panel, textvariable=self.var_estado, values=self.controller.estados, state="readonly", width=22).grid(
+        ttk.Combobox(p, textvariable=self.var_estado, values=self.controller.estados, state="readonly", width=22).grid(
             row=fila, column=0, sticky="ew", pady=(0, PAD_MD))
         fila += 1
 
-        ttk.Label(self.panel, text="Sucursal").grid(row=fila, column=0, sticky="w", pady=(0, PAD_SM))
+        ttk.Label(p, text="Sucursal").grid(row=fila, column=0, sticky="w", pady=(0, PAD_SM))
         fila += 1
-        ttk.Combobox(self.panel, textvariable=self.var_sucursal, values=self.controller.sucursales, state="readonly", width=22).grid(
+        ttk.Combobox(p, textvariable=self.var_sucursal, values=self.controller.sucursales, state="readonly", width=22).grid(
             row=fila, column=0, sticky="ew", pady=(0, PAD_MD))
         fila += 1
 
-        frame_acciones = ttk.Frame(self.panel)
+        frame_acciones = ttk.Frame(p)
         frame_acciones.grid(row=fila, column=0, sticky="ew", pady=(PAD_MD, PAD_SM))
         btn_guardar = ttk.Button(frame_acciones, text="💾 Guardar", command=self._guardar)
         btn_guardar.pack(fill="x", pady=2)
@@ -188,11 +196,11 @@ class MainWindow:
         self._botones_accion.extend([btn_guardar, btn_limpiar])
         fila += 1
 
-        ttk.Separator(self.panel, orient="horizontal").grid(row=fila, column=0, sticky="ew", pady=PAD_MD)
+        ttk.Separator(p, orient="horizontal").grid(row=fila, column=0, sticky="ew", pady=PAD_MD)
         fila += 1
 
         # ── Detalle selección + enriquecimiento ──────────────────────
-        frame_seleccion = ttk.Frame(self.panel)
+        frame_seleccion = ttk.Frame(p)
         frame_seleccion.grid(row=fila, column=0, sticky="ew", pady=(0, PAD_SM))
         ttk.Label(frame_seleccion, text="Seleccionado:", style="Filtros.TLabel").pack(side="left")
         self.lbl_seleccion_nombre = ttk.Label(frame_seleccion, text="—", style="Filtros.TLabel")
@@ -200,7 +208,7 @@ class MainWindow:
         self.frame_badge_seleccion = frame_seleccion
         fila += 1
 
-        frame_enrich = ttk.Frame(self.panel)
+        frame_enrich = ttk.Frame(p)
         frame_enrich.grid(row=fila, column=0, sticky="ew", pady=(0, PAD_SM))
 
         ttk.Label(frame_enrich, text="📍", style="Filtros.TLabel").grid(row=0, column=0, sticky="w")
@@ -226,15 +234,13 @@ class MainWindow:
         frame_enrich.columnconfigure(1, weight=1)
         fila += 1
 
-        frame_busqueda = ttk.Frame(self.panel)
+        frame_busqueda = ttk.Frame(p)
         frame_busqueda.grid(row=fila, column=0, sticky="ew")
         btn_cargar = ttk.Button(frame_busqueda, text="📦 Cargar envíos", command=self._cargar_async)
         btn_cargar.pack(fill="x", pady=2)
         btn_todos = ttk.Button(frame_busqueda, text="📋 Mostrar todos", command=self._mostrar_todos)
         btn_todos.pack(fill="x", pady=2)
         self._botones_accion.extend([btn_cargar, btn_todos])
-
-        self.panel.columnconfigure(0, weight=1)
 
     def _crear_barra_progreso(self) -> None:
         self.frame_progreso = ttk.Frame(self.root)

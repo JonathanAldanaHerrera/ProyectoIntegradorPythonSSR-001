@@ -58,3 +58,55 @@ ICONOS_ESTADO = {
     "Entregado": "✅",
     "Retrasado": "⚠️",
 }
+
+
+class ScrollableFrame(ttk.Frame):
+    """Frame con scroll vertical. Coloca los widgets en self.interior."""
+
+    def __init__(self, parent: tk.Widget, **kwargs) -> None:
+        super().__init__(parent, **kwargs)
+
+        self._canvas = tk.Canvas(self, highlightthickness=0, borderwidth=0)
+        self._scrollbar = ttk.Scrollbar(self, orient="vertical", command=self._canvas.yview)
+        self.interior = ttk.Frame(self._canvas)
+
+        self._interior_id = self._canvas.create_window(
+            (0, 0), window=self.interior, anchor="nw"
+        )
+
+        self._canvas.configure(yscrollcommand=self._scrollbar.set)
+
+        self._canvas.grid(row=0, column=0, sticky="nsew")
+        self._scrollbar.grid(row=0, column=1, sticky="ns")
+        self.columnconfigure(0, weight=1)
+        self.rowconfigure(0, weight=1)
+
+        self.interior.bind("<Configure>", self._actualizar_scroll_region)
+        self._canvas.bind("<Configure>", self._ajustar_ancho_interior)
+
+        self._canvas.bind("<Enter>", self._activar_rueda)
+        self._canvas.bind("<Leave>", self._desactivar_rueda)
+
+    def _actualizar_scroll_region(self, _event: tk.Event) -> None:
+        self._canvas.configure(scrollregion=self._canvas.bbox("all"))
+
+    def _ajustar_ancho_interior(self, event: tk.Event) -> None:
+        self._canvas.itemconfigure(self._interior_id, width=event.width)
+
+    def _activar_rueda(self, _event: tk.Event) -> None:
+        self._canvas.bind_all("<MouseWheel>", self._on_rueda)
+        self._canvas.bind_all("<Button-4>", self._on_rueda)
+        self._canvas.bind_all("<Button-5>", self._on_rueda)
+
+    def _desactivar_rueda(self, _event: tk.Event) -> None:
+        self._canvas.unbind_all("<MouseWheel>")
+        self._canvas.unbind_all("<Button-4>")
+        self._canvas.unbind_all("<Button-5>")
+
+    def _on_rueda(self, event: tk.Event) -> None:
+        if event.num == 4:          # Linux scroll up
+            self._canvas.yview_scroll(-1, "units")
+        elif event.num == 5:        # Linux scroll down
+            self._canvas.yview_scroll(1, "units")
+        else:                       # Windows / macOS
+            self._canvas.yview_scroll(-1 * (event.delta // 120), "units")
