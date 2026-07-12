@@ -123,10 +123,9 @@ Tkinter **no es thread-safe**: modificar widgets desde un hilo secundario causa 
 
 ## Video demostrativo
 
-*Video demostrarivo en la ruta docs/files/03-eventos-async-evidencia.mp4*
-![alt text](files/03-eventos-async-evidencia.mp4)
+Demostración de ~30s donde la ventana sigue respondiendo mientras corre una tarea larga (carga de envíos), incluyendo cancelación en curso.
 
-
+![Video demostrativo — eventos y asincronía](files/03-eventos-async-evidencia.mp4)
 ## Archivos nuevos y modificados
 
 | Archivo | Cambio |
