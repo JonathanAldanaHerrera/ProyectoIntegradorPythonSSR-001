@@ -9,4 +9,6 @@ class Envio:
     direccion: str
     tipo: str
     estado: str
+    sucursal: str = "Central"
     fecha: str = field(default_factory=lambda: datetime.now().strftime("%Y-%m-%d %H:%M"))
+
