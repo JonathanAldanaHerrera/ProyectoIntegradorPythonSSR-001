@@ -121,6 +121,12 @@ Tkinter **no es thread-safe**: modificar widgets desde un hilo secundario causa 
 - Los botones se deshabilitan durante la ejecución
 - `_guardar()` también verifica que no haya tarea corriendo
 
+## Video demostrativo
+
+*Video demostrarivo en la ruta docs/files/03-eventos-async-evidencia.mp4*
+![alt text](files/03-eventos-async-evidencia.mp4)
+
+
 ## Archivos nuevos y modificados
 
 | Archivo | Cambio |
