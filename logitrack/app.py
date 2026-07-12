@@ -11,7 +11,7 @@ class App:
         self.root = tk.Tk()
         self.root.title("LogiTrack Desktop")
         self.root.geometry("960x600")
-        self.root.minsize(800, 500)
+        self.root.minsize(500, 400)
 
         style = ttk.Style(self.root)
         aplicar_tema(style)

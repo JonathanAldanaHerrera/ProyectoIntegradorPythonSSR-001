@@ -8,6 +8,14 @@ FUENTE_BASE = ("Segoe UI", 10)
 FUENTE_TITULO = ("Segoe UI", 14, "bold")
 FUENTE_STATUS = ("Segoe UI", 9)
 
+PAD_SM = 4
+PAD_MD = 8
+PAD_LG = 12
+PAD_XL = 16
+
+ANCHO_PANEL = 280
+UMBRAL_RESPONSIVE = 700
+
 
 def aplicar_tema(style: ttk.Style) -> None:
     style.theme_use("clam")
