@@ -63,11 +63,14 @@ class MainWindow:
         )
         self.lbl_titulo.grid(row=0, column=0, sticky="w")
 
+        self.lbl_red = ttk.Label(self.barra_superior, text="⚪", style="Filtros.TLabel")
+        self.lbl_red.grid(row=0, column=1, sticky="e", padx=PAD_SM)
+
         self.btn_tema = ttk.Button(
             self.barra_superior, text="🌙", style="Toggle.TButton",
             command=self._toggle_tema, width=3,
         )
-        self.btn_tema.grid(row=0, column=1, sticky="e", padx=PAD_SM)
+        self.btn_tema.grid(row=0, column=2, sticky="e", padx=PAD_SM)
 
         self.barra_superior.columnconfigure(0, weight=1)
 
@@ -105,19 +108,22 @@ class MainWindow:
         self.frame_tabla.columnconfigure(0, weight=1)
         self.frame_tabla.rowconfigure(0, weight=1)
 
-        columnas = ("id", "destinatario", "direccion", "tipo", "estado", "sucursal", "fecha")
+        columnas = ("id", "destinatario", "direccion", "tipo", "estado", "sucursal", "fecha", "clima", "lat", "lng")
+        visibles = ("id", "destinatario", "direccion", "tipo", "estado", "sucursal", "fecha", "clima")
         self.tabla = ttk.Treeview(
-            self.frame_tabla, columns=columnas, show="headings", selectmode="browse"
+            self.frame_tabla, columns=columnas, displaycolumns=visibles,
+            show="headings", selectmode="browse"
         )
 
         encabezados = {
             "id": ("ID", 50, False),
-            "destinatario": ("Destinatario", 140, True),
-            "direccion": ("Dirección", 170, True),
+            "destinatario": ("Destinatario", 130, True),
+            "direccion": ("Dirección", 160, True),
             "tipo": ("Tipo", 70, False),
             "estado": ("Estado", 90, False),
             "sucursal": ("Sucursal", 80, False),
-            "fecha": ("Fecha", 120, False),
+            "fecha": ("Fecha", 110, False),
+            "clima": ("Clima / Ruta", 155, True),
         }
         for col, (titulo, ancho, stretch) in encabezados.items():
             self.tabla.heading(col, text=titulo, command=lambda c=col: self._ordenar_columna(c))
@@ -185,12 +191,39 @@ class MainWindow:
         ttk.Separator(self.panel, orient="horizontal").grid(row=fila, column=0, sticky="ew", pady=PAD_MD)
         fila += 1
 
+        # ── Detalle selección + enriquecimiento ──────────────────────
         frame_seleccion = ttk.Frame(self.panel)
         frame_seleccion.grid(row=fila, column=0, sticky="ew", pady=(0, PAD_SM))
         ttk.Label(frame_seleccion, text="Seleccionado:", style="Filtros.TLabel").pack(side="left")
         self.lbl_seleccion_nombre = ttk.Label(frame_seleccion, text="—", style="Filtros.TLabel")
         self.lbl_seleccion_nombre.pack(side="left", padx=(PAD_SM, 0))
         self.frame_badge_seleccion = frame_seleccion
+        fila += 1
+
+        frame_enrich = ttk.Frame(self.panel)
+        frame_enrich.grid(row=fila, column=0, sticky="ew", pady=(0, PAD_SM))
+
+        ttk.Label(frame_enrich, text="📍", style="Filtros.TLabel").grid(row=0, column=0, sticky="w")
+        self.lbl_lat_lng = ttk.Label(frame_enrich, text="—", style="Filtros.TLabel")
+        self.lbl_lat_lng.grid(row=0, column=1, sticky="w", padx=(PAD_SM, 0))
+
+        ttk.Label(frame_enrich, text="🌡", style="Filtros.TLabel").grid(row=1, column=0, sticky="w")
+        self.lbl_clima_detalle = ttk.Label(frame_enrich, text="—", style="Filtros.TLabel", wraplength=190)
+        self.lbl_clima_detalle.grid(row=1, column=1, sticky="w", padx=(PAD_SM, 0))
+
+        frame_btn_enrich = ttk.Frame(frame_enrich)
+        frame_btn_enrich.grid(row=2, column=0, columnspan=2, sticky="ew", pady=(PAD_SM, 0))
+        self.btn_enriquecer = ttk.Button(
+            frame_btn_enrich, text="🌍 Enriquecer ruta",
+            command=self._enriquecer_async, state="disabled",
+        )
+        self.btn_enriquecer.pack(side="left", fill="x", expand=True, padx=(0, 2))
+        self.btn_sincronizar = ttk.Button(
+            frame_btn_enrich, text="🔄 Sincronizar",
+            command=self._sincronizar_async,
+        )
+        self.btn_sincronizar.pack(side="left", fill="x", expand=True, padx=(2, 0))
+        frame_enrich.columnconfigure(1, weight=1)
         fila += 1
 
         frame_busqueda = ttk.Frame(self.panel)
@@ -334,11 +367,13 @@ class MainWindow:
             self.tabla.move(item, "", idx)
 
         indicador = " ▼" if self._orden_reverso else " ▲"
-        for col in self.tabla["columns"]:
-            texto_base = col.replace("_", " ").capitalize()
-            encabezados = {"id": "ID", "destinatario": "Destinatario", "direccion": "Dirección",
-                          "tipo": "Tipo", "estado": "Estado", "sucursal": "Sucursal", "fecha": "Fecha"}
-            texto = encabezados.get(col, texto_base)
+        _encabezados = {
+            "id": "ID", "destinatario": "Destinatario", "direccion": "Dirección",
+            "tipo": "Tipo", "estado": "Estado", "sucursal": "Sucursal",
+            "fecha": "Fecha", "clima": "Clima / Ruta",
+        }
+        for col in self.tabla["displaycolumns"]:
+            texto = _encabezados.get(col, col.capitalize())
             if col == columna:
                 texto += indicador
             self.tabla.heading(col, text=texto)
@@ -364,7 +399,7 @@ class MainWindow:
             return
 
         col_name = col_names[col_idx]
-        if col_name in ("id", "fecha"):
+        if col_name in ("id", "fecha", "lat", "lng", "clima"):
             return
 
         valor_actual = self.tabla.set(item, col_name)
@@ -440,6 +475,9 @@ class MainWindow:
         seleccion = self.tabla.selection()
         if not seleccion:
             self.lbl_seleccion_nombre.configure(text="—")
+            self.lbl_lat_lng.configure(text="—")
+            self.lbl_clima_detalle.configure(text="—")
+            self.btn_enriquecer.configure(state="disabled")
             return
         item = seleccion[0]
         nombre = self.tabla.set(item, "destinatario")
@@ -447,6 +485,15 @@ class MainWindow:
         self.lbl_seleccion_nombre.configure(text=nombre)
         self._badge_widget = StatusBadge(self.frame_badge_seleccion, estado)
         self._badge_widget.pack(side="left", padx=(PAD_SM, 0))
+
+        lat = self.tabla.set(item, "lat")
+        lng = self.tabla.set(item, "lng")
+        clima = self.tabla.set(item, "clima")
+        self.lbl_lat_lng.configure(
+            text=f"{float(lat):.4f}, {float(lng):.4f}" if lat else "—"
+        )
+        self.lbl_clima_detalle.configure(text=clima if clima and clima != "—" else "—")
+        self.btn_enriquecer.configure(state="normal")
 
     # ── Toggle de tema ───────────────────────────────────────────────
 
@@ -488,6 +535,75 @@ class MainWindow:
     def _cancelar_tarea(self) -> None:
         if self.worker.esta_corriendo:
             self.worker.cancelar()
+
+    def _enriquecer_async(self) -> None:
+        seleccion = self.tabla.selection()
+        if not seleccion or self.worker.esta_corriendo:
+            return
+        item = seleccion[0]
+        envio_id = int(self.tabla.set(item, "id"))
+        self._iniciar_progreso("Obteniendo datos de ruta")
+
+        def tarea(cancel_event):
+            return self.controller.enriquecer_envio_async(envio_id, cancel_event)
+
+        def on_completado(resultado):
+            self._detener_progreso()
+            if resultado is None:
+                self._mostrar_estado(
+                    "⚠ Sin conexión — operación encolada para sincronizar", "Error.TLabel"
+                )
+                self._actualizar_estado_red("sin_conexion")
+            else:
+                clima_display = resultado.get("clima") or "—"
+                self.tabla.set(item, "clima", clima_display)
+                self.tabla.set(item, "lat", str(resultado.get("lat") or ""))
+                self.tabla.set(item, "lng", str(resultado.get("lng") or ""))
+                self._on_seleccion_tabla(None)
+                self._mostrar_estado("✓ Ruta enriquecida correctamente", "Exito.TLabel")
+                self._actualizar_estado_red("ok")
+
+        self.worker.ejecutar(
+            tarea, on_completado,
+            lambda e: (self._detener_progreso(),
+                       self._mostrar_estado(f"Error: {e}", "Error.TLabel")),
+        )
+
+    def _sincronizar_async(self) -> None:
+        if self.worker.esta_corriendo:
+            return
+        self._iniciar_progreso("Sincronizando operaciones pendientes")
+
+        def tarea(cancel_event):
+            return self.controller.sincronizar_pendientes_async(cancel_event)
+
+        def on_completado(resultado):
+            self._detener_progreso()
+            if resultado is None:
+                self._mostrar_estado("⚠ Sincronización cancelada", "Error.TLabel")
+                return
+            exitosas, pendientes = resultado
+            self._refrescar_tabla(self.controller.listar())
+            self._actualizar_kpis()
+            if pendientes == 0:
+                self._mostrar_estado(
+                    f"✓ Sincronización completa — {exitosas} op(s) procesada(s)", "Exito.TLabel"
+                )
+                self._actualizar_estado_red("ok")
+            else:
+                self._mostrar_estado(
+                    f"⚠ Sincronizadas {exitosas}, {pendientes} aún pendiente(s)", "Status.TLabel"
+                )
+
+        self.worker.ejecutar(
+            tarea, on_completado,
+            lambda e: (self._detener_progreso(),
+                       self._mostrar_estado(f"Error: {e}", "Error.TLabel")),
+        )
+
+    def _actualizar_estado_red(self, estado: str) -> None:
+        iconos = {"ok": "🟢", "sin_conexion": "🔴", "sin_datos": "🟡"}
+        self.lbl_red.configure(text=iconos.get(estado, "⚪"))
 
     # ── Acciones sincrónicas ─────────────────────────────────────────
 
@@ -540,8 +656,13 @@ class MainWindow:
     def _agregar_fila(self, envio: dict) -> None:
         self.tabla.insert(
             "", "end", tags=(envio["estado"],),
-            values=(envio["id"], envio["destinatario"], envio["direccion"],
-                    envio["tipo"], envio["estado"], envio["sucursal"], envio["fecha"]),
+            values=(
+                envio["id"], envio["destinatario"], envio["direccion"],
+                envio["tipo"], envio["estado"], envio["sucursal"], envio["fecha"],
+                envio.get("clima") or "—",
+                envio.get("lat") or "",
+                envio.get("lng") or "",
+            ),
         )
 
     def _refrescar_tabla(self, envios: list) -> None:
