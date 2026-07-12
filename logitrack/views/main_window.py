@@ -20,9 +20,9 @@ class MainWindow:
 
         self.var_destinatario = tk.StringVar()
         self.var_direccion = tk.StringVar()
-        self.var_tipo = tk.StringVar(value=EnvioController.TIPOS[0])
-        self.var_estado = tk.StringVar(value=EnvioController.ESTADOS[0])
-        self.var_sucursal = tk.StringVar(value=EnvioController.SUCURSALES[0])
+        self.var_tipo = tk.StringVar(value=self.controller.tipos[0])
+        self.var_estado = tk.StringVar(value=self.controller.estados[0])
+        self.var_sucursal = tk.StringVar(value=self.controller.sucursales[0])
         self.var_busqueda = tk.StringVar()
         self.var_filtro_estado = tk.StringVar(value="Todos")
         self.var_filtro_texto = tk.StringVar()
@@ -77,7 +77,7 @@ class MainWindow:
         ttk.Label(self.frame_filtros, text="Filtrar estado:", style="Filtros.TLabel").pack(
             side="left", padx=(0, PAD_SM)
         )
-        opciones_estado = ["Todos"] + list(EnvioController.ESTADOS)
+        opciones_estado = ["Todos"] + list(self.controller.estados)
         ttk.Combobox(
             self.frame_filtros, textvariable=self.var_filtro_estado,
             values=opciones_estado, state="readonly", width=14, style="Filtros.TCombobox",
@@ -94,7 +94,7 @@ class MainWindow:
         self.frame_kpis = ttk.Frame(self.root)
         self.kpi_cards: dict[str, KPICard] = {}
 
-        for estado in EnvioController.ESTADOS:
+        for estado in self.controller.estados:
             icono = ICONOS_ESTADO.get(estado, "📦")
             card = KPICard(self.frame_kpis, estado, icono)
             card.pack(side="left", fill="x", expand=True, padx=PAD_SM, pady=PAD_SM)
@@ -157,19 +157,19 @@ class MainWindow:
 
         ttk.Label(self.panel, text="Tipo").grid(row=fila, column=0, sticky="w", pady=(0, PAD_SM))
         fila += 1
-        ttk.Combobox(self.panel, textvariable=self.var_tipo, values=EnvioController.TIPOS, state="readonly", width=22).grid(
+        ttk.Combobox(self.panel, textvariable=self.var_tipo, values=self.controller.tipos, state="readonly", width=22).grid(
             row=fila, column=0, sticky="ew", pady=(0, PAD_MD))
         fila += 1
 
         ttk.Label(self.panel, text="Estado").grid(row=fila, column=0, sticky="w", pady=(0, PAD_SM))
         fila += 1
-        ttk.Combobox(self.panel, textvariable=self.var_estado, values=EnvioController.ESTADOS, state="readonly", width=22).grid(
+        ttk.Combobox(self.panel, textvariable=self.var_estado, values=self.controller.estados, state="readonly", width=22).grid(
             row=fila, column=0, sticky="ew", pady=(0, PAD_MD))
         fila += 1
 
         ttk.Label(self.panel, text="Sucursal").grid(row=fila, column=0, sticky="w", pady=(0, PAD_SM))
         fila += 1
-        ttk.Combobox(self.panel, textvariable=self.var_sucursal, values=EnvioController.SUCURSALES, state="readonly", width=22).grid(
+        ttk.Combobox(self.panel, textvariable=self.var_sucursal, values=self.controller.sucursales, state="readonly", width=22).grid(
             row=fila, column=0, sticky="ew", pady=(0, PAD_MD))
         fila += 1
 
@@ -375,13 +375,13 @@ class MainWindow:
         x, y, w, h = bbox
 
         if col_name == "estado":
-            editor = ttk.Combobox(self.tabla, values=list(EnvioController.ESTADOS), state="readonly", width=w // 8)
+            editor = ttk.Combobox(self.tabla, values=list(self.controller.estados), state="readonly", width=w // 8)
             editor.set(valor_actual)
         elif col_name == "tipo":
-            editor = ttk.Combobox(self.tabla, values=list(EnvioController.TIPOS), state="readonly", width=w // 8)
+            editor = ttk.Combobox(self.tabla, values=list(self.controller.tipos), state="readonly", width=w // 8)
             editor.set(valor_actual)
         elif col_name == "sucursal":
-            editor = ttk.Combobox(self.tabla, values=list(EnvioController.SUCURSALES), state="readonly", width=w // 8)
+            editor = ttk.Combobox(self.tabla, values=list(self.controller.sucursales), state="readonly", width=w // 8)
             editor.set(valor_actual)
         else:
             editor = ttk.Entry(self.tabla, width=w // 8)
@@ -511,14 +511,14 @@ class MainWindow:
             self._agregar_fila(envio)
             self._actualizar_kpis()
             self._limpiar()
-            self._mostrar_estado(f"✓ Envío #{envio.id} registrado correctamente", "Exito.TLabel")
+            self._mostrar_estado(f"✓ Envío #{envio['id']} registrado correctamente", "Exito.TLabel")
 
     def _limpiar(self, _event: tk.Event | None = None) -> None:
         self.var_destinatario.set("")
         self.var_direccion.set("")
-        self.var_tipo.set(EnvioController.TIPOS[0])
-        self.var_estado.set(EnvioController.ESTADOS[0])
-        self.var_sucursal.set(EnvioController.SUCURSALES[0])
+        self.var_tipo.set(self.controller.tipos[0])
+        self.var_estado.set(self.controller.estados[0])
+        self.var_sucursal.set(self.controller.sucursales[0])
         self._mostrar_estado("Formulario limpiado", "Status.TLabel")
 
     def _mostrar_todos(self) -> None:
@@ -537,10 +537,11 @@ class MainWindow:
 
     # ── Helpers ──────────────────────────────────────────────────────
 
-    def _agregar_fila(self, envio) -> None:
+    def _agregar_fila(self, envio: dict) -> None:
         self.tabla.insert(
-            "", "end", tags=(envio.estado,),
-            values=(envio.id, envio.destinatario, envio.direccion, envio.tipo, envio.estado, envio.sucursal, envio.fecha),
+            "", "end", tags=(envio["estado"],),
+            values=(envio["id"], envio["destinatario"], envio["direccion"],
+                    envio["tipo"], envio["estado"], envio["sucursal"], envio["fecha"]),
         )
 
     def _refrescar_tabla(self, envios: list) -> None:
