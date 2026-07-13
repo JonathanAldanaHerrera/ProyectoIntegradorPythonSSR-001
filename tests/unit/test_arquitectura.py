@@ -6,6 +6,7 @@ Reglas:
   - services/ no importa views/
   - services/ no importa controllers/
 """
+
 import ast
 import pathlib
 
@@ -31,25 +32,25 @@ def _archivos(capa: str) -> list[pathlib.Path]:
 def test_views_no_importan_models():
     for path in _archivos("views"):
         for modulo in _modulos_importados(path):
-            assert "logitrack.models" not in modulo, (
-                f"Violación: {path.name} importa '{modulo}'"
-            )
+            assert (
+                "logitrack.models" not in modulo
+            ), f"Violación: {path.name} importa '{modulo}'"
 
 
 def test_services_no_importan_views():
     for path in _archivos("services"):
         for modulo in _modulos_importados(path):
-            assert "logitrack.views" not in modulo, (
-                f"Violación: {path.name} importa '{modulo}'"
-            )
+            assert (
+                "logitrack.views" not in modulo
+            ), f"Violación: {path.name} importa '{modulo}'"
 
 
 def test_services_no_importan_controllers():
     for path in _archivos("services"):
         for modulo in _modulos_importados(path):
-            assert "logitrack.controllers" not in modulo, (
-                f"Violación: {path.name} importa '{modulo}'"
-            )
+            assert (
+                "logitrack.controllers" not in modulo
+            ), f"Violación: {path.name} importa '{modulo}'"
 
 
 def test_service_retorna_dicts_no_objetos_envio():
@@ -73,6 +74,6 @@ def test_service_retorna_dicts_no_objetos_envio():
 def test_controller_no_importa_modelos():
     for path in _archivos("controllers"):
         for modulo in _modulos_importados(path):
-            assert "logitrack.models" not in modulo, (
-                f"Violación: {path.name} importa '{modulo}'"
-            )
+            assert (
+                "logitrack.models" not in modulo
+            ), f"Violación: {path.name} importa '{modulo}'"

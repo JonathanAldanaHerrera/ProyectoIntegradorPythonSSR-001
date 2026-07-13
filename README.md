@@ -1,5 +1,7 @@
 # 📦 LogiTrack Desktop
 
+[![CI](https://github.com/jach17/ProyectoIntegradorPythonSSR-001/actions/workflows/ci.yml/badge.svg)](https://github.com/jach17/ProyectoIntegradorPythonSSR-001/actions/workflows/ci.yml)
+
 > Aplicación de escritorio para registro y seguimiento de envíos logísticos, con persistencia SQLite y enriquecimiento de rutas por API.
 
 ---
@@ -19,6 +21,8 @@ Los operadores de sucursales necesitan una herramienta que funcione sin conexió
 ---
 
 ## Arquitectura
+
+![Diagrama de arquitectura](docs/files/architecture.svg)
 
 ```
 ┌──────────────────────────────────────────────────────────┐

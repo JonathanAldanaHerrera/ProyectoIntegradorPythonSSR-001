@@ -3,6 +3,10 @@ __pycache__
 *.pyc
 logitrack.log
 
+# Variables de entorno (nunca commitear secretos)
+.env
+.env.*
+
 # PyInstaller
 dist/
 build/

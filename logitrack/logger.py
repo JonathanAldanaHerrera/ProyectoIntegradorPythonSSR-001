@@ -5,7 +5,9 @@ import sys
 from logitrack.paths import get_log_path
 
 
-def configurar_logging(nivel: int = logging.DEBUG, archivo: pathlib.Path | None = None) -> None:
+def configurar_logging(
+    nivel: int = logging.DEBUG, archivo: pathlib.Path | None = None
+) -> None:
     fmt = logging.Formatter(
         fmt="%(asctime)s  %(levelname)-8s  %(name)-30s  %(message)s",
         datefmt="%Y-%m-%d %H:%M:%S",

@@ -1,26 +1,32 @@
 import threading
+from typing import TYPE_CHECKING, Any
 
 from logitrack.services.envio_service import EnvioService
+
+if TYPE_CHECKING:
+    from logitrack.services.route_api_client import RouteApiClient
 
 
 class EnvioController:
 
-    def __init__(self, service: EnvioService, cliente=None) -> None:
+    def __init__(
+        self, service: EnvioService, cliente: "RouteApiClient | None" = None
+    ) -> None:
         self._service = service
         self._cliente = cliente  # RouteApiClient | None
 
     # ── Constantes expuestas a la vista ──────────────────────────────
 
     @property
-    def tipos(self) -> tuple:
+    def tipos(self) -> tuple[str, ...]:
         return self._service.TIPOS
 
     @property
-    def estados(self) -> tuple:
+    def estados(self) -> tuple[str, ...]:
         return self._service.ESTADOS
 
     @property
-    def sucursales(self) -> tuple:
+    def sucursales(self) -> tuple[str, ...]:
         return self._service.SUCURSALES
 
     # ── Delegación al servicio ────────────────────────────────────────
@@ -29,31 +35,39 @@ class EnvioController:
         return self._service.validar(destinatario, direccion)
 
     def registrar(
-        self, destinatario: str, direccion: str, tipo: str, estado: str,
+        self,
+        destinatario: str,
+        direccion: str,
+        tipo: str,
+        estado: str,
         sucursal: str = "Central",
-    ) -> dict | None:
+    ) -> dict[str, Any] | None:
         return self._service.registrar(destinatario, direccion, tipo, estado, sucursal)
 
-    def listar(self) -> list[dict]:
+    def listar(self) -> list[dict[str, Any]]:
         return self._service.listar()
 
-    def filtrar(self, estado: str | None, texto: str) -> list[dict]:
+    def filtrar(self, estado: str | None, texto: str) -> list[dict[str, Any]]:
         return self._service.filtrar(estado, texto)
 
     def conteos_por_estado(self) -> dict[str, int]:
         return self._service.conteos_por_estado()
 
-    def actualizar_envio(self, envio_id: int, campo: str, valor: str | float | None) -> bool:
+    def actualizar_envio(
+        self, envio_id: int, campo: str, valor: str | float | None
+    ) -> bool:
         return self._service.actualizar(envio_id, campo, valor)
 
-    def cargar_envios_lento(self, cancel_event: threading.Event) -> list[dict] | None:
+    def cargar_envios_lento(
+        self, cancel_event: threading.Event
+    ) -> list[dict[str, Any]] | None:
         return self._service.cargar_lento(cancel_event)
 
     # ── Enriquecimiento con API externa ──────────────────────────────
 
     def enriquecer_envio_async(
         self, envio_id: int, cancel_event: threading.Event
-    ) -> dict | None:
+    ) -> dict[str, Any] | None:
         if cancel_event.is_set() or self._cliente is None:
             return None
         return self._service.enriquecer_lento(envio_id, self._cliente, cancel_event)

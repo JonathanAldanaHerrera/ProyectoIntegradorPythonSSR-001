@@ -1,5 +1,5 @@
 import time
-from typing import ClassVar
+from typing import Any, ClassVar
 
 import requests
 
@@ -38,7 +38,7 @@ class RouteApiClient:
     NOMINATIM = "https://nominatim.openstreetmap.org/search"
     OPENMETEO = "https://api.open-meteo.com/v1/forecast"
     TIMEOUT = 8
-    INTENTOS = 3        # intentos totales (1 original + 2 reintentos)
+    INTENTOS = 3  # intentos totales (1 original + 2 reintentos)
     PAUSA_REINTENTO = 1.2
     _MIN_PAUSA_NOMINATIM: ClassVar[float] = 1.1  # política de uso: 1 req/seg
 
@@ -49,7 +49,7 @@ class RouteApiClient:
 
     # ── API pública ───────────────────────────────────────────────────
 
-    def obtener_datos_ruta(self, direccion: str) -> dict | None:
+    def obtener_datos_ruta(self, direccion: str) -> dict[str, Any] | None:
         """
         Retorna dict con claves lat, lng, clima, estado_red.
         Retorna None si falla la geocodificación.
@@ -62,10 +62,15 @@ class RouteApiClient:
             time.sleep(espera)
 
         _log.info("Geocodificando dirección: '%s'", direccion)
-        resp = self._get(self.NOMINATIM, {
-            "q": direccion, "format": "json", "limit": 1,
-            "accept-language": "es",
-        })
+        resp = self._get(
+            self.NOMINATIM,
+            {
+                "q": direccion,
+                "format": "json",
+                "limit": 1,
+                "accept-language": "es",
+            },
+        )
         self._ultimo_nominatim = time.monotonic()
 
         if resp is None:
@@ -84,7 +89,9 @@ class RouteApiClient:
         clima_str = self._obtener_clima(lat, lng)
 
         estado_red = "ok" if clima_str else "ok_parcial"
-        _log.info("Enriquecimiento completo — estado_red=%s, clima=%s", estado_red, clima_str)
+        _log.info(
+            "Enriquecimiento completo — estado_red=%s, clima=%s", estado_red, clima_str
+        )
         return {
             "lat": lat,
             "lng": lng,
@@ -96,11 +103,14 @@ class RouteApiClient:
 
     def _obtener_clima(self, lat: float, lng: float) -> str | None:
         _log.info("Consultando clima en lat=%.4f, lng=%.4f", lat, lng)
-        resp = self._get(self.OPENMETEO, {
-            "latitude": lat,
-            "longitude": lng,
-            "current_weather": "true",
-        })
+        resp = self._get(
+            self.OPENMETEO,
+            {
+                "latitude": lat,
+                "longitude": lng,
+                "current_weather": "true",
+            },
+        )
         if resp is None:
             _log.warning("Open-Meteo no respondió para lat=%.4f, lng=%.4f", lat, lng)
             return None
@@ -112,13 +122,14 @@ class RouteApiClient:
         _log.info("Clima OK → %s (código WMO %s)", resultado, codigo)
         return resultado
 
-    def _get(self, url: str, params: dict) -> requests.Response | None:
+    def _get(self, url: str, params: dict[str, Any]) -> requests.Response | None:
         dominio = url.split("/")[2]
         for intento in range(self.INTENTOS):
             t0 = time.monotonic()
             try:
                 resp = requests.get(
-                    url, params=params,
+                    url,
+                    params=params,
                     timeout=self.TIMEOUT,
                     headers=self._HEADERS,
                 )
@@ -126,26 +137,39 @@ class RouteApiClient:
                 resp.raise_for_status()
                 _log.debug(
                     "GET %s → HTTP %d  (%.0fms, intento %d/%d)",
-                    dominio, resp.status_code, latencia, intento + 1, self.INTENTOS,
+                    dominio,
+                    resp.status_code,
+                    latencia,
+                    intento + 1,
+                    self.INTENTOS,
                 )
                 return resp
             except requests.exceptions.HTTPError as exc:
                 codigo = exc.response.status_code if exc.response is not None else 0
                 _log.warning(
                     "GET %s → HTTP %d (intento %d/%d)",
-                    dominio, codigo, intento + 1, self.INTENTOS,
+                    dominio,
+                    codigo,
+                    intento + 1,
+                    self.INTENTOS,
                 )
                 if 400 <= codigo < 500 and codigo != 429:
                     break
             except requests.exceptions.Timeout:
                 _log.warning(
                     "GET %s → Timeout tras %.0fms (intento %d/%d)",
-                    dominio, (time.monotonic() - t0) * 1000, intento + 1, self.INTENTOS,
+                    dominio,
+                    (time.monotonic() - t0) * 1000,
+                    intento + 1,
+                    self.INTENTOS,
                 )
             except requests.exceptions.ConnectionError as exc:
                 _log.warning(
                     "GET %s → ConnectionError (intento %d/%d): %s",
-                    dominio, intento + 1, self.INTENTOS, exc,
+                    dominio,
+                    intento + 1,
+                    self.INTENTOS,
+                    exc,
                 )
             except requests.exceptions.RequestException as exc:
                 _log.error("GET %s → error irrecuperable: %s", dominio, exc)
@@ -153,5 +177,7 @@ class RouteApiClient:
             if intento < self.INTENTOS - 1:
                 _log.debug("Reintentando en %.1fs…", self.PAUSA_REINTENTO)
                 time.sleep(self.PAUSA_REINTENTO)
-        _log.error("GET %s → agotados %d intentos, sin respuesta", dominio, self.INTENTOS)
+        _log.error(
+            "GET %s → agotados %d intentos, sin respuesta", dominio, self.INTENTOS
+        )
         return None

@@ -2,6 +2,7 @@ import pathlib
 import sqlite3
 import threading
 import time
+from typing import Any
 
 from logitrack.logger import get_logger
 from logitrack.models.envio import Envio
@@ -53,8 +54,8 @@ CREATE TABLE IF NOT EXISTS pending_ops (
 
 _SUCURSALES_INICIALES = [
     ("Central", "CDMX"),
-    ("Norte",   "Monterrey"),
-    ("Sur",     "Oaxaca"),
+    ("Norte", "Monterrey"),
+    ("Sur", "Oaxaca"),
     ("Oriente", "Veracruz"),
 ]
 
@@ -101,15 +102,28 @@ class SQLiteRepository(EnvioRepository):
                 """INSERT INTO shipments
                    (destinatario, direccion, tipo, estado, sucursal, fecha, lat, lng, clima)
                    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)""",
-                (envio.destinatario, envio.direccion, envio.tipo, envio.estado,
-                 envio.sucursal, envio.fecha, envio.lat, envio.lng, envio.clima),
+                (
+                    envio.destinatario,
+                    envio.direccion,
+                    envio.tipo,
+                    envio.estado,
+                    envio.sucursal,
+                    envio.fecha,
+                    envio.lat,
+                    envio.lng,
+                    envio.clima,
+                ),
             )
             self._conn.commit()
-            nuevo_id = cur.lastrowid
+            nuevo_id: int = cur.lastrowid or 0
         ms = (time.monotonic() - t0) * 1000
         _log.info(
             "INSERT shipments → id=%d  dest='%s'  dir='%s'  estado='%s'  (%.0fms)",
-            nuevo_id, envio.destinatario, envio.direccion, envio.estado, ms,
+            nuevo_id,
+            envio.destinatario,
+            envio.direccion,
+            envio.estado,
+            ms,
         )
         return nuevo_id
 
@@ -122,14 +136,22 @@ class SQLiteRepository(EnvioRepository):
             row = cur.fetchone()
         ms = (time.monotonic() - t0) * 1000
         if row:
-            _log.debug("SELECT shipments WHERE id=%d → encontrado  (%.0fms)", envio_id, ms)
+            _log.debug(
+                "SELECT shipments WHERE id=%d → encontrado  (%.0fms)", envio_id, ms
+            )
         else:
-            _log.warning("SELECT shipments WHERE id=%d → no encontrado  (%.0fms)", envio_id, ms)
+            _log.warning(
+                "SELECT shipments WHERE id=%d → no encontrado  (%.0fms)", envio_id, ms
+            )
         return self._fila_a_envio(row) if row else None
 
-    def actualizar_campo(self, envio_id: int, campo: str, valor: str | float | None) -> bool:
+    def actualizar_campo(
+        self, envio_id: int, campo: str, valor: str | float | None
+    ) -> bool:
         if campo not in _CAMPOS_PERMITIDOS:
-            _log.error("UPDATE shipments → campo '%s' no permitido (id=%d)", campo, envio_id)
+            _log.error(
+                "UPDATE shipments → campo '%s' no permitido (id=%d)", campo, envio_id
+            )
             return False
         t0 = time.monotonic()
         with self._lock:
@@ -142,12 +164,18 @@ class SQLiteRepository(EnvioRepository):
         if actualizado:
             _log.info(
                 "UPDATE shipments SET %s=%r WHERE id=%d → OK  (%.0fms)",
-                campo, valor, envio_id, ms,
+                campo,
+                valor,
+                envio_id,
+                ms,
             )
         else:
             _log.warning(
                 "UPDATE shipments SET %s=%r WHERE id=%d → 0 filas afectadas  (%.0fms)",
-                campo, valor, envio_id, ms,
+                campo,
+                valor,
+                envio_id,
+                ms,
             )
         return actualizado
 
@@ -160,7 +188,12 @@ class SQLiteRepository(EnvioRepository):
                 (envio_id, accion, resultado),
             )
             self._conn.commit()
-        _log.info("LOG registrado → envio_id=%d  accion='%s'  resultado='%s'", envio_id, accion, resultado)
+        _log.info(
+            "LOG registrado → envio_id=%d  accion='%s'  resultado='%s'",
+            envio_id,
+            accion,
+            resultado,
+        )
 
     def encolar_pendiente(self, envio_id: int, operacion: str) -> None:
         with self._lock:
@@ -169,9 +202,11 @@ class SQLiteRepository(EnvioRepository):
                 (envio_id, operacion),
             )
             self._conn.commit()
-        _log.warning("PENDING_OP encolada → envio_id=%d  operacion='%s'", envio_id, operacion)
+        _log.warning(
+            "PENDING_OP encolada → envio_id=%d  operacion='%s'", envio_id, operacion
+        )
 
-    def obtener_pendientes(self) -> list[dict]:
+    def obtener_pendientes(self) -> list[dict[str, Any]]:
         with self._lock:
             cur = self._conn.execute("SELECT * FROM pending_ops ORDER BY creado")
             filas = [dict(row) for row in cur.fetchall()]

@@ -1,13 +1,26 @@
+import threading
 import tkinter as tk
 import tkinter.ttk as ttk
+from typing import Any
 
 from logitrack.controllers.envio_controller import EnvioController
 from logitrack.controllers.task_worker import TaskWorker
 from logitrack.ui.theme import (
-    PAD_SM, PAD_MD, PAD_LG, ANCHO_PANEL, UMBRAL_RESPONSIVE,
-    COLORES_ESTADO, cambiar_tema, obtener_tema_actual,
+    PAD_SM,
+    PAD_MD,
+    PAD_LG,
+    ANCHO_PANEL,
+    UMBRAL_RESPONSIVE,
+    COLORES_ESTADO,
+    cambiar_tema,
+    obtener_tema_actual,
 )
-from logitrack.views.components import KPICard, ScrollableFrame, StatusBadge, ICONOS_ESTADO
+from logitrack.views.components import (
+    KPICard,
+    ScrollableFrame,
+    StatusBadge,
+    ICONOS_ESTADO,
+)
 
 
 class MainWindow:
@@ -31,9 +44,12 @@ class MainWindow:
         self._botones_accion: list[ttk.Button] = []
         self._orden_columna: str = ""
         self._orden_reverso: bool = False
-        self._editor_activo: tk.Widget | None = None
+        self._editor_activo: ttk.Entry | ttk.Combobox | None = None
         self._badge_widget: tk.Widget | None = None
         self._supresion_filtros: bool = False
+        self._edit_item: str = ""
+        self._edit_col: str = ""
+        self._edit_old: str = ""
 
         self._construir_widgets()
         self._aplicar_layout_horizontal()
@@ -67,8 +83,11 @@ class MainWindow:
         self.lbl_red.grid(row=0, column=1, sticky="e", padx=PAD_SM)
 
         self.btn_tema = ttk.Button(
-            self.barra_superior, text="🌙", style="Toggle.TButton",
-            command=self._toggle_tema, width=3,
+            self.barra_superior,
+            text="🌙",
+            style="Toggle.TButton",
+            command=self._toggle_tema,
+            width=3,
         )
         self.btn_tema.grid(row=0, column=2, sticky="e", padx=PAD_SM)
 
@@ -77,21 +96,25 @@ class MainWindow:
     def _crear_barra_filtros(self) -> None:
         self.frame_filtros = ttk.Frame(self.root, style="Filtros.TFrame")
 
-        ttk.Label(self.frame_filtros, text="Filtrar estado:", style="Filtros.TLabel").pack(
-            side="left", padx=(0, PAD_SM)
-        )
+        ttk.Label(
+            self.frame_filtros, text="Filtrar estado:", style="Filtros.TLabel"
+        ).pack(side="left", padx=(0, PAD_SM))
         opciones_estado = ["Todos"] + list(self.controller.estados)
         ttk.Combobox(
-            self.frame_filtros, textvariable=self.var_filtro_estado,
-            values=opciones_estado, state="readonly", width=14, style="Filtros.TCombobox",
+            self.frame_filtros,
+            textvariable=self.var_filtro_estado,
+            values=opciones_estado,
+            state="readonly",
+            width=14,
+            style="Filtros.TCombobox",
         ).pack(side="left", padx=(0, PAD_LG))
 
         ttk.Label(self.frame_filtros, text="Buscar:", style="Filtros.TLabel").pack(
             side="left", padx=(0, PAD_SM)
         )
-        ttk.Entry(self.frame_filtros, textvariable=self.var_filtro_texto, width=20).pack(
-            side="left", padx=(0, PAD_SM)
-        )
+        ttk.Entry(
+            self.frame_filtros, textvariable=self.var_filtro_texto, width=20
+        ).pack(side="left", padx=(0, PAD_SM))
 
     def _crear_barra_kpis(self) -> None:
         self.frame_kpis = ttk.Frame(self.root)
@@ -108,11 +131,34 @@ class MainWindow:
         self.frame_tabla.columnconfigure(0, weight=1)
         self.frame_tabla.rowconfigure(0, weight=1)
 
-        columnas = ("id", "destinatario", "direccion", "tipo", "estado", "sucursal", "fecha", "clima", "lat", "lng")
-        visibles = ("id", "destinatario", "direccion", "tipo", "estado", "sucursal", "fecha", "clima")
+        columnas = (
+            "id",
+            "destinatario",
+            "direccion",
+            "tipo",
+            "estado",
+            "sucursal",
+            "fecha",
+            "clima",
+            "lat",
+            "lng",
+        )
+        visibles = (
+            "id",
+            "destinatario",
+            "direccion",
+            "tipo",
+            "estado",
+            "sucursal",
+            "fecha",
+            "clima",
+        )
         self.tabla = ttk.Treeview(
-            self.frame_tabla, columns=columnas, displaycolumns=visibles,
-            show="headings", selectmode="browse"
+            self.frame_tabla,
+            columns=columnas,
+            displaycolumns=visibles,
+            show="headings",
+            selectmode="browse",
         )
 
         encabezados = {
@@ -126,11 +172,15 @@ class MainWindow:
             "clima": ("Clima / Ruta", 155, True),
         }
         for col, (titulo, ancho, stretch) in encabezados.items():
-            self.tabla.heading(col, text=titulo, command=lambda c=col: self._ordenar_columna(c))
+            self.tabla.heading(
+                col, text=titulo, command=lambda c=col: self._ordenar_columna(c)  # type: ignore[misc]
+            )
             self.tabla.column(col, width=ancho, minwidth=40, stretch=stretch)
 
         for estado, colores in COLORES_ESTADO.items():
-            self.tabla.tag_configure(estado, background=colores["tag_bg"], foreground=colores["fg"])
+            self.tabla.tag_configure(
+                estado, background=colores["tag_bg"], foreground=colores["fg"]
+            )
 
         self.scrollbar = ttk.Scrollbar(
             self.frame_tabla, orient="vertical", command=self.tabla.yview
@@ -158,52 +208,89 @@ class MainWindow:
 
         fila = 0
 
-        ttk.Label(p, text="Destinatario *").grid(row=fila, column=0, sticky="w", pady=(0, PAD_SM))
+        ttk.Label(p, text="Destinatario *").grid(
+            row=fila, column=0, sticky="w", pady=(0, PAD_SM)
+        )
         fila += 1
-        self.entry_destinatario = ttk.Entry(p, textvariable=self.var_destinatario, width=25)
+        self.entry_destinatario = ttk.Entry(
+            p, textvariable=self.var_destinatario, width=25
+        )
         self.entry_destinatario.grid(row=fila, column=0, sticky="ew", pady=(0, PAD_MD))
         fila += 1
 
-        ttk.Label(p, text="Dirección *").grid(row=fila, column=0, sticky="w", pady=(0, PAD_SM))
+        ttk.Label(p, text="Dirección *").grid(
+            row=fila, column=0, sticky="w", pady=(0, PAD_SM)
+        )
         fila += 1
-        ttk.Entry(p, textvariable=self.var_direccion, width=25).grid(row=fila, column=0, sticky="ew", pady=(0, PAD_MD))
+        ttk.Entry(p, textvariable=self.var_direccion, width=25).grid(
+            row=fila, column=0, sticky="ew", pady=(0, PAD_MD)
+        )
         fila += 1
 
         ttk.Label(p, text="Tipo").grid(row=fila, column=0, sticky="w", pady=(0, PAD_SM))
         fila += 1
-        ttk.Combobox(p, textvariable=self.var_tipo, values=self.controller.tipos, state="readonly", width=22).grid(
-            row=fila, column=0, sticky="ew", pady=(0, PAD_MD))
+        ttk.Combobox(
+            p,
+            textvariable=self.var_tipo,
+            values=self.controller.tipos,
+            state="readonly",
+            width=22,
+        ).grid(row=fila, column=0, sticky="ew", pady=(0, PAD_MD))
         fila += 1
 
-        ttk.Label(p, text="Estado").grid(row=fila, column=0, sticky="w", pady=(0, PAD_SM))
+        ttk.Label(p, text="Estado").grid(
+            row=fila, column=0, sticky="w", pady=(0, PAD_SM)
+        )
         fila += 1
-        ttk.Combobox(p, textvariable=self.var_estado, values=self.controller.estados, state="readonly", width=22).grid(
-            row=fila, column=0, sticky="ew", pady=(0, PAD_MD))
+        ttk.Combobox(
+            p,
+            textvariable=self.var_estado,
+            values=self.controller.estados,
+            state="readonly",
+            width=22,
+        ).grid(row=fila, column=0, sticky="ew", pady=(0, PAD_MD))
         fila += 1
 
-        ttk.Label(p, text="Sucursal").grid(row=fila, column=0, sticky="w", pady=(0, PAD_SM))
+        ttk.Label(p, text="Sucursal").grid(
+            row=fila, column=0, sticky="w", pady=(0, PAD_SM)
+        )
         fila += 1
-        ttk.Combobox(p, textvariable=self.var_sucursal, values=self.controller.sucursales, state="readonly", width=22).grid(
-            row=fila, column=0, sticky="ew", pady=(0, PAD_MD))
+        ttk.Combobox(
+            p,
+            textvariable=self.var_sucursal,
+            values=self.controller.sucursales,
+            state="readonly",
+            width=22,
+        ).grid(row=fila, column=0, sticky="ew", pady=(0, PAD_MD))
         fila += 1
 
         frame_acciones = ttk.Frame(p)
         frame_acciones.grid(row=fila, column=0, sticky="ew", pady=(PAD_MD, PAD_SM))
-        btn_guardar = ttk.Button(frame_acciones, text="💾 Guardar", command=self._guardar)
+        btn_guardar = ttk.Button(
+            frame_acciones, text="💾 Guardar", command=self._guardar
+        )
         btn_guardar.pack(fill="x", pady=2)
-        btn_limpiar = ttk.Button(frame_acciones, text="🧹 Limpiar", command=self._limpiar)
+        btn_limpiar = ttk.Button(
+            frame_acciones, text="🧹 Limpiar", command=self._limpiar
+        )
         btn_limpiar.pack(fill="x", pady=2)
         self._botones_accion.extend([btn_guardar, btn_limpiar])
         fila += 1
 
-        ttk.Separator(p, orient="horizontal").grid(row=fila, column=0, sticky="ew", pady=PAD_MD)
+        ttk.Separator(p, orient="horizontal").grid(
+            row=fila, column=0, sticky="ew", pady=PAD_MD
+        )
         fila += 1
 
         # ── Detalle selección + enriquecimiento ──────────────────────
         frame_seleccion = ttk.Frame(p)
         frame_seleccion.grid(row=fila, column=0, sticky="ew", pady=(0, PAD_SM))
-        ttk.Label(frame_seleccion, text="Seleccionado:", style="Filtros.TLabel").pack(side="left")
-        self.lbl_seleccion_nombre = ttk.Label(frame_seleccion, text="—", style="Filtros.TLabel")
+        ttk.Label(frame_seleccion, text="Seleccionado:", style="Filtros.TLabel").pack(
+            side="left"
+        )
+        self.lbl_seleccion_nombre = ttk.Label(
+            frame_seleccion, text="—", style="Filtros.TLabel"
+        )
         self.lbl_seleccion_nombre.pack(side="left", padx=(PAD_SM, 0))
         self.frame_badge_seleccion = frame_seleccion
         fila += 1
@@ -211,23 +298,34 @@ class MainWindow:
         frame_enrich = ttk.Frame(p)
         frame_enrich.grid(row=fila, column=0, sticky="ew", pady=(0, PAD_SM))
 
-        ttk.Label(frame_enrich, text="📍", style="Filtros.TLabel").grid(row=0, column=0, sticky="w")
+        ttk.Label(frame_enrich, text="📍", style="Filtros.TLabel").grid(
+            row=0, column=0, sticky="w"
+        )
         self.lbl_lat_lng = ttk.Label(frame_enrich, text="—", style="Filtros.TLabel")
         self.lbl_lat_lng.grid(row=0, column=1, sticky="w", padx=(PAD_SM, 0))
 
-        ttk.Label(frame_enrich, text="🌡", style="Filtros.TLabel").grid(row=1, column=0, sticky="w")
-        self.lbl_clima_detalle = ttk.Label(frame_enrich, text="—", style="Filtros.TLabel", wraplength=190)
+        ttk.Label(frame_enrich, text="🌡", style="Filtros.TLabel").grid(
+            row=1, column=0, sticky="w"
+        )
+        self.lbl_clima_detalle = ttk.Label(
+            frame_enrich, text="—", style="Filtros.TLabel", wraplength=190
+        )
         self.lbl_clima_detalle.grid(row=1, column=1, sticky="w", padx=(PAD_SM, 0))
 
         frame_btn_enrich = ttk.Frame(frame_enrich)
-        frame_btn_enrich.grid(row=2, column=0, columnspan=2, sticky="ew", pady=(PAD_SM, 0))
+        frame_btn_enrich.grid(
+            row=2, column=0, columnspan=2, sticky="ew", pady=(PAD_SM, 0)
+        )
         self.btn_enriquecer = ttk.Button(
-            frame_btn_enrich, text="🌍 Enriquecer ruta",
-            command=self._enriquecer_async, state="disabled",
+            frame_btn_enrich,
+            text="🌍 Enriquecer ruta",
+            command=self._enriquecer_async,
+            state="disabled",
         )
         self.btn_enriquecer.pack(side="left", fill="x", expand=True, padx=(0, 2))
         self.btn_sincronizar = ttk.Button(
-            frame_btn_enrich, text="🔄 Sincronizar",
+            frame_btn_enrich,
+            text="🔄 Sincronizar",
             command=self._sincronizar_async,
         )
         self.btn_sincronizar.pack(side="left", fill="x", expand=True, padx=(2, 0))
@@ -236,23 +334,30 @@ class MainWindow:
 
         frame_busqueda = ttk.Frame(p)
         frame_busqueda.grid(row=fila, column=0, sticky="ew")
-        btn_cargar = ttk.Button(frame_busqueda, text="📦 Cargar envíos", command=self._cargar_async)
+        btn_cargar = ttk.Button(
+            frame_busqueda, text="📦 Cargar envíos", command=self._cargar_async
+        )
         btn_cargar.pack(fill="x", pady=2)
-        btn_todos = ttk.Button(frame_busqueda, text="📋 Mostrar todos", command=self._mostrar_todos)
+        btn_todos = ttk.Button(
+            frame_busqueda, text="📋 Mostrar todos", command=self._mostrar_todos
+        )
         btn_todos.pack(fill="x", pady=2)
         self._botones_accion.extend([btn_cargar, btn_todos])
 
     def _crear_barra_progreso(self) -> None:
         self.frame_progreso = ttk.Frame(self.root)
         self.progressbar = ttk.Progressbar(
-            self.frame_progreso, mode="indeterminate",
+            self.frame_progreso,
+            mode="indeterminate",
             style="Progreso.Horizontal.TProgressbar",
         )
         self.progressbar.pack(side="left", fill="x", expand=True, padx=(0, PAD_MD))
 
         self.btn_cancelar = ttk.Button(
-            self.frame_progreso, text="✕ Cancelar",
-            style="Cancelar.TButton", command=self._cancelar_tarea,
+            self.frame_progreso,
+            text="✕ Cancelar",
+            style="Cancelar.TButton",
+            command=self._cancelar_tarea,
         )
         self.btn_cancelar.pack(side="right")
 
@@ -266,16 +371,37 @@ class MainWindow:
     # ── Layout responsivo ────────────────────────────────────────────
 
     def _aplicar_layout_horizontal(self) -> None:
-        for w in (self.barra_superior, self.frame_filtros, self.frame_kpis,
-                  self.frame_tabla, self.panel, self.frame_progreso, self.lbl_estado):
+        for w in (
+            self.barra_superior,
+            self.frame_filtros,
+            self.frame_kpis,
+            self.frame_tabla,
+            self.panel,
+            self.frame_progreso,
+            self.lbl_estado,
+        ):
             w.grid_forget()
 
         r = 0
-        self.barra_superior.grid(row=r, column=0, columnspan=2, sticky="ew", padx=PAD_LG, pady=(PAD_LG, 0)); r += 1
-        self.frame_filtros.grid(row=r, column=0, columnspan=2, sticky="ew", padx=PAD_LG, pady=(PAD_MD, 0)); r += 1
-        self.frame_kpis.grid(row=r, column=0, columnspan=2, sticky="ew", padx=PAD_LG, pady=(PAD_MD, 0)); r += 1
-        self.frame_tabla.grid(row=r, column=0, sticky="nsew", padx=(PAD_LG, PAD_SM), pady=PAD_MD)
-        self.panel.grid(row=r, column=1, sticky="nsew", padx=(PAD_SM, PAD_LG), pady=PAD_MD); r += 1
+        self.barra_superior.grid(
+            row=r, column=0, columnspan=2, sticky="ew", padx=PAD_LG, pady=(PAD_LG, 0)
+        )
+        r += 1
+        self.frame_filtros.grid(
+            row=r, column=0, columnspan=2, sticky="ew", padx=PAD_LG, pady=(PAD_MD, 0)
+        )
+        r += 1
+        self.frame_kpis.grid(
+            row=r, column=0, columnspan=2, sticky="ew", padx=PAD_LG, pady=(PAD_MD, 0)
+        )
+        r += 1
+        self.frame_tabla.grid(
+            row=r, column=0, sticky="nsew", padx=(PAD_LG, PAD_SM), pady=PAD_MD
+        )
+        self.panel.grid(
+            row=r, column=1, sticky="nsew", padx=(PAD_SM, PAD_LG), pady=PAD_MD
+        )
+        r += 1
         # row r reserved for progress
         r += 1
         self.lbl_estado.grid(row=r, column=0, columnspan=2, sticky="ew")
@@ -289,16 +415,34 @@ class MainWindow:
         self._layout_horizontal = True
 
     def _aplicar_layout_vertical(self) -> None:
-        for w in (self.barra_superior, self.frame_filtros, self.frame_kpis,
-                  self.frame_tabla, self.panel, self.frame_progreso, self.lbl_estado):
+        for w in (
+            self.barra_superior,
+            self.frame_filtros,
+            self.frame_kpis,
+            self.frame_tabla,
+            self.panel,
+            self.frame_progreso,
+            self.lbl_estado,
+        ):
             w.grid_forget()
 
         r = 0
-        self.barra_superior.grid(row=r, column=0, sticky="ew", padx=PAD_LG, pady=(PAD_LG, 0)); r += 1
-        self.frame_filtros.grid(row=r, column=0, sticky="ew", padx=PAD_LG, pady=(PAD_MD, 0)); r += 1
-        self.frame_kpis.grid(row=r, column=0, sticky="ew", padx=PAD_LG, pady=(PAD_MD, 0)); r += 1
-        self.panel.grid(row=r, column=0, sticky="ew", padx=PAD_LG, pady=(PAD_MD, 0)); r += 1
-        self.frame_tabla.grid(row=r, column=0, sticky="nsew", padx=PAD_LG, pady=PAD_MD); r += 1
+        self.barra_superior.grid(
+            row=r, column=0, sticky="ew", padx=PAD_LG, pady=(PAD_LG, 0)
+        )
+        r += 1
+        self.frame_filtros.grid(
+            row=r, column=0, sticky="ew", padx=PAD_LG, pady=(PAD_MD, 0)
+        )
+        r += 1
+        self.frame_kpis.grid(
+            row=r, column=0, sticky="ew", padx=PAD_LG, pady=(PAD_MD, 0)
+        )
+        r += 1
+        self.panel.grid(row=r, column=0, sticky="ew", padx=PAD_LG, pady=(PAD_MD, 0))
+        r += 1
+        self.frame_tabla.grid(row=r, column=0, sticky="nsew", padx=PAD_LG, pady=PAD_MD)
+        r += 1
         # row r reserved for progress
         r += 1
         self.lbl_estado.grid(row=r, column=0, sticky="ew")
@@ -329,7 +473,14 @@ class MainWindow:
 
         prog_row = 4 if self._layout_horizontal else 5
         colspan = 2 if self._layout_horizontal else 1
-        self.frame_progreso.grid(row=prog_row, column=0, columnspan=colspan, sticky="ew", padx=PAD_LG, pady=(0, PAD_SM))
+        self.frame_progreso.grid(
+            row=prog_row,
+            column=0,
+            columnspan=colspan,
+            sticky="ew",
+            padx=PAD_LG,
+            pady=(0, PAD_SM),
+        )
         self.progressbar.start(15)
 
     def _detener_progreso(self) -> None:
@@ -351,7 +502,9 @@ class MainWindow:
         texto = self.var_filtro_texto.get()
         resultados = self.controller.filtrar(estado, texto)
         self._refrescar_tabla(resultados)
-        self._mostrar_estado(f"🔍 {len(resultados)} envío(s) filtrado(s)", "Status.TLabel")
+        self._mostrar_estado(
+            f"🔍 {len(resultados)} envío(s) filtrado(s)", "Status.TLabel"
+        )
 
     # ── Ordenamiento de columnas ─────────────────────────────────────
 
@@ -362,7 +515,9 @@ class MainWindow:
             self._orden_columna = columna
             self._orden_reverso = False
 
-        filas = [(self.tabla.set(item, columna), item) for item in self.tabla.get_children()]
+        filas = [
+            (self.tabla.set(item, columna), item) for item in self.tabla.get_children()
+        ]
 
         try:
             filas.sort(key=lambda x: int(x[0]), reverse=self._orden_reverso)
@@ -374,9 +529,14 @@ class MainWindow:
 
         indicador = " ▼" if self._orden_reverso else " ▲"
         _encabezados = {
-            "id": "ID", "destinatario": "Destinatario", "direccion": "Dirección",
-            "tipo": "Tipo", "estado": "Estado", "sucursal": "Sucursal",
-            "fecha": "Fecha", "clima": "Clima / Ruta",
+            "id": "ID",
+            "destinatario": "Destinatario",
+            "direccion": "Dirección",
+            "tipo": "Tipo",
+            "estado": "Estado",
+            "sucursal": "Sucursal",
+            "fecha": "Fecha",
+            "clima": "Clima / Ruta",
         }
         for col in self.tabla["displaycolumns"]:
             texto = _encabezados.get(col, col.capitalize())
@@ -415,14 +575,30 @@ class MainWindow:
 
         x, y, w, h = bbox
 
+        editor: ttk.Entry | ttk.Combobox
         if col_name == "estado":
-            editor = ttk.Combobox(self.tabla, values=list(self.controller.estados), state="readonly", width=w // 8)
+            editor = ttk.Combobox(
+                self.tabla,
+                values=list(self.controller.estados),
+                state="readonly",
+                width=w // 8,
+            )
             editor.set(valor_actual)
         elif col_name == "tipo":
-            editor = ttk.Combobox(self.tabla, values=list(self.controller.tipos), state="readonly", width=w // 8)
+            editor = ttk.Combobox(
+                self.tabla,
+                values=list(self.controller.tipos),
+                state="readonly",
+                width=w // 8,
+            )
             editor.set(valor_actual)
         elif col_name == "sucursal":
-            editor = ttk.Combobox(self.tabla, values=list(self.controller.sucursales), state="readonly", width=w // 8)
+            editor = ttk.Combobox(
+                self.tabla,
+                values=list(self.controller.sucursales),
+                state="readonly",
+                width=w // 8,
+            )
             editor.set(valor_actual)
         else:
             editor = ttk.Entry(self.tabla, width=w // 8)
@@ -432,9 +608,9 @@ class MainWindow:
         editor.place(x=x, y=y, width=w, height=h)
         editor.focus_set()
 
-        editor._edit_item = item
-        editor._edit_col = col_name
-        editor._edit_old = valor_actual
+        self._edit_item = item
+        self._edit_col = col_name
+        self._edit_old = valor_actual
 
         editor.bind("<Return>", self._confirmar_edicion)
         editor.bind("<Escape>", lambda e: self._cancelar_edicion())
@@ -450,9 +626,9 @@ class MainWindow:
 
         editor = self._editor_activo
         nuevo_valor = editor.get().strip()
-        item = editor._edit_item
-        col_name = editor._edit_col
-        viejo_valor = editor._edit_old
+        item = self._edit_item
+        col_name = self._edit_col
+        viejo_valor = self._edit_old
 
         self._editor_activo = None
         editor.destroy()
@@ -524,19 +700,25 @@ class MainWindow:
             return
         self._iniciar_progreso("Cargando envíos")
 
-        def tarea(cancel_event):
+        def tarea(cancel_event: threading.Event) -> list[dict[str, Any]] | None:
             return self.controller.cargar_envios_lento(cancel_event)
 
-        def on_completado(resultado):
+        def on_completado(resultado: list[dict[str, Any]] | None) -> None:
             self._detener_progreso()
             if resultado is None:
                 self._mostrar_estado("⚠ Carga cancelada", "Error.TLabel")
             else:
                 self._refrescar_tabla(resultado)
                 self._actualizar_kpis()
-                self._mostrar_estado(f"✓ {len(resultado)} envío(s) cargado(s)", "Exito.TLabel")
+                self._mostrar_estado(
+                    f"✓ {len(resultado)} envío(s) cargado(s)", "Exito.TLabel"
+                )
 
-        self.worker.ejecutar(tarea, on_completado, lambda e: (self._detener_progreso(), self._mostrar_estado(f"Error: {e}", "Error.TLabel")))
+        def on_error_cargar(e: Exception) -> None:
+            self._detener_progreso()
+            self._mostrar_estado(f"Error: {e}", "Error.TLabel")
+
+        self.worker.ejecutar(tarea, on_completado, on_error_cargar)
 
     def _cancelar_tarea(self) -> None:
         if self.worker.esta_corriendo:
@@ -550,14 +732,15 @@ class MainWindow:
         envio_id = int(self.tabla.set(item, "id"))
         self._iniciar_progreso("Obteniendo datos de ruta")
 
-        def tarea(cancel_event):
+        def tarea(cancel_event: threading.Event) -> dict[str, Any] | None:
             return self.controller.enriquecer_envio_async(envio_id, cancel_event)
 
-        def on_completado(resultado):
+        def on_completado(resultado: dict[str, Any] | None) -> None:
             self._detener_progreso()
             if resultado is None:
                 self._mostrar_estado(
-                    "⚠ Sin conexión — operación encolada para sincronizar", "Error.TLabel"
+                    "⚠ Sin conexión — operación encolada para sincronizar",
+                    "Error.TLabel",
                 )
                 self._actualizar_estado_red("sin_conexion")
             else:
@@ -569,21 +752,21 @@ class MainWindow:
                 self._mostrar_estado("✓ Ruta enriquecida correctamente", "Exito.TLabel")
                 self._actualizar_estado_red("ok")
 
-        self.worker.ejecutar(
-            tarea, on_completado,
-            lambda e: (self._detener_progreso(),
-                       self._mostrar_estado(f"Error: {e}", "Error.TLabel")),
-        )
+        def on_error_enriquecer(e: Exception) -> None:
+            self._detener_progreso()
+            self._mostrar_estado(f"Error: {e}", "Error.TLabel")
+
+        self.worker.ejecutar(tarea, on_completado, on_error_enriquecer)
 
     def _sincronizar_async(self) -> None:
         if self.worker.esta_corriendo:
             return
         self._iniciar_progreso("Sincronizando operaciones pendientes")
 
-        def tarea(cancel_event):
+        def tarea(cancel_event: threading.Event) -> tuple[int, int] | None:
             return self.controller.sincronizar_pendientes_async(cancel_event)
 
-        def on_completado(resultado):
+        def on_completado(resultado: tuple[int, int] | None) -> None:
             self._detener_progreso()
             if resultado is None:
                 self._mostrar_estado("⚠ Sincronización cancelada", "Error.TLabel")
@@ -593,19 +776,21 @@ class MainWindow:
             self._actualizar_kpis()
             if pendientes == 0:
                 self._mostrar_estado(
-                    f"✓ Sincronización completa — {exitosas} op(s) procesada(s)", "Exito.TLabel"
+                    f"✓ Sincronización completa — {exitosas} op(s) procesada(s)",
+                    "Exito.TLabel",
                 )
                 self._actualizar_estado_red("ok")
             else:
                 self._mostrar_estado(
-                    f"⚠ Sincronizadas {exitosas}, {pendientes} aún pendiente(s)", "Status.TLabel"
+                    f"⚠ Sincronizadas {exitosas}, {pendientes} aún pendiente(s)",
+                    "Status.TLabel",
                 )
 
-        self.worker.ejecutar(
-            tarea, on_completado,
-            lambda e: (self._detener_progreso(),
-                       self._mostrar_estado(f"Error: {e}", "Error.TLabel")),
-        )
+        def on_error_sync(e: Exception) -> None:
+            self._detener_progreso()
+            self._mostrar_estado(f"Error: {e}", "Error.TLabel")
+
+        self.worker.ejecutar(tarea, on_completado, on_error_sync)
 
     def _actualizar_estado_red(self, estado: str) -> None:
         iconos = {"ok": "🟢", "sin_conexion": "🔴", "sin_datos": "🟡"}
@@ -628,12 +813,16 @@ class MainWindow:
             self._mostrar_estado(f"Error: {' | '.join(errores)}", "Error.TLabel")
             return
 
-        envio = self.controller.registrar(destinatario, direccion, tipo, estado, sucursal)
+        envio = self.controller.registrar(
+            destinatario, direccion, tipo, estado, sucursal
+        )
         if envio:
             self._agregar_fila(envio)
             self._actualizar_kpis()
             self._limpiar()
-            self._mostrar_estado(f"✓ Envío #{envio['id']} registrado correctamente", "Exito.TLabel")
+            self._mostrar_estado(
+                f"✓ Envío #{envio['id']} registrado correctamente", "Exito.TLabel"
+            )
 
     def _limpiar(self, _event: tk.Event | None = None) -> None:
         self.var_destinatario.set("")
@@ -659,19 +848,26 @@ class MainWindow:
 
     # ── Helpers ──────────────────────────────────────────────────────
 
-    def _agregar_fila(self, envio: dict) -> None:
+    def _agregar_fila(self, envio: dict[str, Any]) -> None:
         self.tabla.insert(
-            "", "end", tags=(envio["estado"],),
+            "",
+            "end",
+            tags=(envio["estado"],),
             values=(
-                envio["id"], envio["destinatario"], envio["direccion"],
-                envio["tipo"], envio["estado"], envio["sucursal"], envio["fecha"],
+                envio["id"],
+                envio["destinatario"],
+                envio["direccion"],
+                envio["tipo"],
+                envio["estado"],
+                envio["sucursal"],
+                envio["fecha"],
                 envio.get("clima") or "—",
                 envio.get("lat") or "",
                 envio.get("lng") or "",
             ),
         )
 
-    def _refrescar_tabla(self, envios: list) -> None:
+    def _refrescar_tabla(self, envios: list[dict[str, Any]]) -> None:
         for item in self.tabla.get_children():
             self.tabla.delete(item)
         for envio in envios:

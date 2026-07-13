@@ -1,8 +1,12 @@
 import threading
 import time
 from abc import ABC, abstractmethod
+from typing import TYPE_CHECKING, Any
 
 from logitrack.models.envio import Envio
+
+if TYPE_CHECKING:
+    from logitrack.services.route_api_client import RouteApiClient
 
 
 class EnvioRepository(ABC):
@@ -17,7 +21,9 @@ class EnvioRepository(ABC):
     def obtener_por_id(self, envio_id: int) -> Envio | None: ...
 
     @abstractmethod
-    def actualizar_campo(self, envio_id: int, campo: str, valor: str | float | None) -> bool: ...
+    def actualizar_campo(
+        self, envio_id: int, campo: str, valor: str | float | None
+    ) -> bool: ...
 
     def registrar_log(self, envio_id: int, accion: str, resultado: str) -> None:
         pass
@@ -25,7 +31,7 @@ class EnvioRepository(ABC):
     def encolar_pendiente(self, envio_id: int, operacion: str) -> None:
         pass
 
-    def obtener_pendientes(self) -> list[dict]:
+    def obtener_pendientes(self) -> list[dict[str, Any]]:
         return []
 
     def eliminar_pendiente(self, op_id: int) -> None:
@@ -53,7 +59,9 @@ class MemoryRepository(EnvioRepository):
     def obtener_por_id(self, envio_id: int) -> Envio | None:
         return next((e for e in self._envios if e.id == envio_id), None)
 
-    def actualizar_campo(self, envio_id: int, campo: str, valor: str | float | None) -> bool:
+    def actualizar_campo(
+        self, envio_id: int, campo: str, valor: str | float | None
+    ) -> bool:
         envio = self.obtener_por_id(envio_id)
         if not envio or not hasattr(envio, campo):
             return False
@@ -78,7 +86,7 @@ class EnvioService:
     # ── Conversión interna ────────────────────────────────────────────
 
     @staticmethod
-    def _a_dict(envio: Envio) -> dict:
+    def _a_dict(envio: Envio) -> dict[str, Any]:
         return {
             "id": envio.id,
             "destinatario": envio.destinatario,
@@ -103,9 +111,13 @@ class EnvioService:
         return errores
 
     def registrar(
-        self, destinatario: str, direccion: str, tipo: str, estado: str,
+        self,
+        destinatario: str,
+        direccion: str,
+        tipo: str,
+        estado: str,
         sucursal: str = "Central",
-    ) -> dict | None:
+    ) -> dict[str, Any] | None:
         if self.validar(destinatario, direccion):
             return None
         envio = Envio(
@@ -119,24 +131,28 @@ class EnvioService:
         envio.id = self._repo.agregar(envio)
         return self._a_dict(envio)
 
-    def listar(self) -> list[dict]:
+    def listar(self) -> list[dict[str, Any]]:
         return [self._a_dict(e) for e in self._repo.todos()]
 
-    def buscar(self, termino: str) -> list[dict]:
+    def buscar(self, termino: str) -> list[dict[str, Any]]:
         termino = termino.strip().lower()
         if not termino:
             return self.listar()
-        return [self._a_dict(e) for e in self._repo.todos()
-                if termino in e.destinatario.lower()]
+        return [
+            self._a_dict(e)
+            for e in self._repo.todos()
+            if termino in e.destinatario.lower()
+        ]
 
-    def filtrar(self, estado: str | None, texto: str) -> list[dict]:
+    def filtrar(self, estado: str | None, texto: str) -> list[dict[str, Any]]:
         resultado = self._repo.todos()
         if estado and estado != "Todos":
             resultado = [e for e in resultado if e.estado == estado]
         texto = texto.strip().lower()
         if texto:
             resultado = [
-                e for e in resultado
+                e
+                for e in resultado
                 if texto in e.destinatario.lower() or texto in e.direccion.lower()
             ]
         return [self._a_dict(e) for e in resultado]
@@ -156,8 +172,11 @@ class EnvioService:
     # ── Enriquecimiento con API externa ──────────────────────────────
 
     def enriquecer(
-        self, envio_id: int, cliente, encolar_si_falla: bool = True
-    ) -> dict | None:
+        self,
+        envio_id: int,
+        cliente: "RouteApiClient",
+        encolar_si_falla: bool = True,
+    ) -> dict[str, Any] | None:
         envio = self._repo.obtener_por_id(envio_id)
         if not envio:
             return None
@@ -171,7 +190,8 @@ class EnvioService:
             if datos.get("clima"):
                 self._repo.actualizar_campo(envio_id, "clima", datos["clima"])
             self._repo.registrar_log(
-                envio_id, "enriquecer",
+                envio_id,
+                "enriquecer",
                 f"ok: lat={datos.get('lat'):.4f}, clima={datos.get('clima')}",
             )
             actualizado = self._repo.obtener_por_id(envio_id)
@@ -182,10 +202,10 @@ class EnvioService:
             self._repo.registrar_log(envio_id, "enriquecer", f"fallo: {datos}")
             return None
 
-    def sincronizar_pendientes(self, cliente) -> tuple[int, int]:
+    def sincronizar_pendientes(self, cliente: "RouteApiClient") -> tuple[int, int]:
         pendientes = self._repo.obtener_pendientes()
 
-        vistos: dict[int, int] = {}   # envio_id → op_id a procesar
+        vistos: dict[int, int] = {}  # envio_id → op_id a procesar
         duplicados: list[int] = []
         for op in pendientes:
             eid = op["envio_id"]
@@ -206,22 +226,29 @@ class EnvioService:
         return exitosas, restantes
 
     def enriquecer_lento(
-        self, envio_id: int, cliente, cancel_event: threading.Event
-    ) -> dict | None:
+        self,
+        envio_id: int,
+        cliente: "RouteApiClient",
+        cancel_event: threading.Event,
+    ) -> dict[str, Any] | None:
         if cancel_event.is_set():
             return None
         return self.enriquecer(envio_id, cliente, encolar_si_falla=True)
 
     # ── Operaciones lentas (simuladas) ───────────────────────────────
 
-    def cargar_lento(self, cancel_event: threading.Event) -> list[dict] | None:
+    def cargar_lento(
+        self, cancel_event: threading.Event
+    ) -> list[dict[str, Any]] | None:
         for _ in range(25):
             if cancel_event.is_set():
                 return None
             time.sleep(0.1)
         return self.listar()
 
-    def buscar_lento(self, termino: str, cancel_event: threading.Event) -> list[dict] | None:
+    def buscar_lento(
+        self, termino: str, cancel_event: threading.Event
+    ) -> list[dict[str, Any]] | None:
         for _ in range(15):
             if cancel_event.is_set():
                 return None

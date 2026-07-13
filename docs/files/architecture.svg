@@ -1,0 +1,130 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 820 520" font-family="monospace, sans-serif" font-size="13">
+
+  <!-- Background -->
+  <rect width="820" height="520" fill="#f8f9fa" rx="12"/>
+
+  <!-- Title -->
+  <text x="410" y="36" text-anchor="middle" font-size="17" font-weight="bold" fill="#1a1a2e">LogiTrack Desktop — Arquitectura MVC</text>
+
+  <!-- ── Layer labels ── -->
+  <text x="104" y="74" text-anchor="middle" font-size="11" fill="#6c757d" font-weight="bold">VIEWS</text>
+  <text x="270" y="74" text-anchor="middle" font-size="11" fill="#6c757d" font-weight="bold">CONTROLLERS</text>
+  <text x="460" y="74" text-anchor="middle" font-size="11" fill="#6c757d" font-weight="bold">SERVICES</text>
+  <text x="650" y="74" text-anchor="middle" font-size="11" fill="#6c757d" font-weight="bold">MODELS</text>
+
+  <!-- ── VIEWS column ── -->
+  <!-- MainWindow -->
+  <rect x="20" y="86" width="168" height="52" rx="8" fill="#dbeafe" stroke="#3b82f6" stroke-width="1.5"/>
+  <text x="104" y="107" text-anchor="middle" font-weight="bold" fill="#1e40af">MainWindow</text>
+  <text x="104" y="124" text-anchor="middle" font-size="11" fill="#1e40af">main_window.py</text>
+
+  <!-- components -->
+  <rect x="20" y="152" width="168" height="52" rx="8" fill="#dbeafe" stroke="#3b82f6" stroke-width="1.5"/>
+  <text x="104" y="173" text-anchor="middle" font-weight="bold" fill="#1e40af">KPICard · StatusBadge</text>
+  <text x="104" y="190" text-anchor="middle" font-size="11" fill="#1e40af">components.py</text>
+
+  <!-- ScrollableFrame -->
+  <rect x="20" y="218" width="168" height="52" rx="8" fill="#dbeafe" stroke="#3b82f6" stroke-width="1.5"/>
+  <text x="104" y="239" text-anchor="middle" font-weight="bold" fill="#1e40af">ScrollableFrame</text>
+  <text x="104" y="256" text-anchor="middle" font-size="11" fill="#1e40af">components.py</text>
+
+  <!-- theme -->
+  <rect x="20" y="284" width="168" height="52" rx="8" fill="#ede9fe" stroke="#7c3aed" stroke-width="1.5"/>
+  <text x="104" y="305" text-anchor="middle" font-weight="bold" fill="#5b21b6">Theme / Style</text>
+  <text x="104" y="322" text-anchor="middle" font-size="11" fill="#5b21b6">ui/theme.py</text>
+
+  <!-- ── CONTROLLERS column ── -->
+  <!-- EnvioController -->
+  <rect x="196" y="86" width="148" height="52" rx="8" fill="#dcfce7" stroke="#16a34a" stroke-width="1.5"/>
+  <text x="270" y="107" text-anchor="middle" font-weight="bold" fill="#14532d">EnvioController</text>
+  <text x="270" y="124" text-anchor="middle" font-size="11" fill="#14532d">envio_controller.py</text>
+
+  <!-- TaskWorker -->
+  <rect x="196" y="152" width="148" height="52" rx="8" fill="#dcfce7" stroke="#16a34a" stroke-width="1.5"/>
+  <text x="270" y="173" text-anchor="middle" font-weight="bold" fill="#14532d">TaskWorker</text>
+  <text x="270" y="190" text-anchor="middle" font-size="11" fill="#14532d">task_worker.py</text>
+
+  <!-- App / Container -->
+  <rect x="196" y="218" width="148" height="52" rx="8" fill="#dcfce7" stroke="#16a34a" stroke-width="1.5"/>
+  <text x="270" y="239" text-anchor="middle" font-weight="bold" fill="#14532d">App · Container</text>
+  <text x="270" y="256" text-anchor="middle" font-size="11" fill="#14532d">app.py</text>
+
+  <!-- ── SERVICES column ── -->
+  <!-- EnvioService -->
+  <rect x="362" y="86" width="180" height="52" rx="8" fill="#fef3c7" stroke="#d97706" stroke-width="1.5"/>
+  <text x="452" y="107" text-anchor="middle" font-weight="bold" fill="#92400e">EnvioService</text>
+  <text x="452" y="124" text-anchor="middle" font-size="11" fill="#92400e">envio_service.py</text>
+
+  <!-- SQLiteRepository -->
+  <rect x="362" y="152" width="180" height="52" rx="8" fill="#fef3c7" stroke="#d97706" stroke-width="1.5"/>
+  <text x="452" y="173" text-anchor="middle" font-weight="bold" fill="#92400e">SQLiteRepository</text>
+  <text x="452" y="190" text-anchor="middle" font-size="11" fill="#92400e">sqlite_repository.py</text>
+
+  <!-- MemoryRepository -->
+  <rect x="362" y="218" width="180" height="52" rx="8" fill="#fef3c7" stroke="#d97706" stroke-width="1.5"/>
+  <text x="452" y="239" text-anchor="middle" font-weight="bold" fill="#92400e">MemoryRepository</text>
+  <text x="452" y="256" text-anchor="middle" font-size="11" fill="#92400e">envio_service.py</text>
+
+  <!-- RouteApiClient -->
+  <rect x="362" y="284" width="180" height="52" rx="8" fill="#fef3c7" stroke="#d97706" stroke-width="1.5"/>
+  <text x="452" y="305" text-anchor="middle" font-weight="bold" fill="#92400e">RouteApiClient</text>
+  <text x="452" y="322" text-anchor="middle" font-size="11" fill="#92400e">route_api_client.py</text>
+
+  <!-- Logger -->
+  <rect x="362" y="350" width="180" height="52" rx="8" fill="#fef3c7" stroke="#d97706" stroke-width="1.5"/>
+  <text x="452" y="371" text-anchor="middle" font-weight="bold" fill="#92400e">Logger</text>
+  <text x="452" y="388" text-anchor="middle" font-size="11" fill="#92400e">logger.py</text>
+
+  <!-- ── MODELS column ── -->
+  <!-- Envio -->
+  <rect x="560" y="86" width="180" height="52" rx="8" fill="#fce7f3" stroke="#db2777" stroke-width="1.5"/>
+  <text x="650" y="107" text-anchor="middle" font-weight="bold" fill="#9d174d">Envio</text>
+  <text x="650" y="124" text-anchor="middle" font-size="11" fill="#9d174d">models/envio.py</text>
+
+  <!-- EnvioRepository (ABC) -->
+  <rect x="560" y="152" width="180" height="52" rx="8" fill="#fce7f3" stroke="#db2777" stroke-width="1.5"/>
+  <text x="650" y="173" text-anchor="middle" font-weight="bold" fill="#9d174d">EnvioRepository (ABC)</text>
+  <text x="650" y="190" text-anchor="middle" font-size="11" fill="#9d174d">envio_service.py</text>
+
+  <!-- ── External dependencies ── -->
+  <!-- SQLite DB -->
+  <rect x="362" y="430" width="180" height="52" rx="8" fill="#e0e7ff" stroke="#4f46e5" stroke-width="1.5" stroke-dasharray="6,3"/>
+  <text x="452" y="451" text-anchor="middle" font-weight="bold" fill="#3730a3">logitrack.db</text>
+  <text x="452" y="468" text-anchor="middle" font-size="11" fill="#3730a3">SQLite 3 · WAL mode</text>
+
+  <!-- APIs -->
+  <rect x="560" y="430" width="180" height="52" rx="8" fill="#e0e7ff" stroke="#4f46e5" stroke-width="1.5" stroke-dasharray="6,3"/>
+  <text x="650" y="451" text-anchor="middle" font-weight="bold" fill="#3730a3">Nominatim · Open-Meteo</text>
+  <text x="650" y="468" text-anchor="middle" font-size="11" fill="#3730a3">APIs externas (HTTP)</text>
+
+  <!-- ── Arrows ── -->
+  <!-- Views → Controllers -->
+  <line x1="188" y1="112" x2="196" y2="112" stroke="#64748b" stroke-width="1.5" marker-end="url(#arr)"/>
+  <!-- Controllers → Services -->
+  <line x1="344" y1="112" x2="362" y2="112" stroke="#64748b" stroke-width="1.5" marker-end="url(#arr)"/>
+  <!-- Services → Models -->
+  <line x1="542" y1="112" x2="560" y2="112" stroke="#64748b" stroke-width="1.5" marker-end="url(#arr)"/>
+
+  <!-- SQLiteRepository → logitrack.db -->
+  <line x1="452" y1="204" x2="452" y2="430" stroke="#4f46e5" stroke-width="1.5" stroke-dasharray="5,3" marker-end="url(#arr-blue)"/>
+
+  <!-- RouteApiClient → APIs -->
+  <line x1="542" y1="310" x2="560" y2="456" stroke="#4f46e5" stroke-width="1.5" stroke-dasharray="5,3" marker-end="url(#arr-blue)"/>
+
+  <!-- Arrow markers -->
+  <defs>
+    <marker id="arr" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto">
+      <path d="M0,0 L0,6 L8,3 z" fill="#64748b"/>
+    </marker>
+    <marker id="arr-blue" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto">
+      <path d="M0,0 L0,6 L8,3 z" fill="#4f46e5"/>
+    </marker>
+  </defs>
+
+  <!-- ── Dependency rule note ── -->
+  <rect x="20" y="430" width="328" height="52" rx="8" fill="#f1f5f9" stroke="#94a3b8" stroke-width="1"/>
+  <text x="184" y="451" text-anchor="middle" font-size="11" fill="#475569" font-weight="bold">Regla de dependencia (verificada por AST)</text>
+  <text x="184" y="468" text-anchor="middle" font-size="11" fill="#475569">views → controllers → services → models</text>
+  <text x="184" y="484" text-anchor="middle" font-size="11" fill="#c0392b">views NO importa models directamente</text>
+
+</svg>
