@@ -2,8 +2,10 @@ import logging
 import pathlib
 import sys
 
+from logitrack.paths import get_log_path
 
-def configurar_logging(nivel: int = logging.DEBUG, archivo: str = "logitrack.log") -> None:
+
+def configurar_logging(nivel: int = logging.DEBUG, archivo: pathlib.Path | None = None) -> None:
     fmt = logging.Formatter(
         fmt="%(asctime)s  %(levelname)-8s  %(name)-30s  %(message)s",
         datefmt="%Y-%m-%d %H:%M:%S",
@@ -13,7 +15,7 @@ def configurar_logging(nivel: int = logging.DEBUG, archivo: str = "logitrack.log
     consola.setLevel(nivel)
     consola.setFormatter(fmt)
 
-    ruta = pathlib.Path(archivo)
+    ruta = archivo or get_log_path()
     fichero = logging.FileHandler(ruta, encoding="utf-8")
     fichero.setLevel(logging.DEBUG)
     fichero.setFormatter(fmt)

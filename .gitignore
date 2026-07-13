@@ -2,3 +2,20 @@
 __pycache__
 *.pyc
 logitrack.log
+
+# PyInstaller
+dist/
+build/
+*.spec
+!scripts/build.spec
+
+# SQLite (generada en runtime)
+logitrack.db
+logitrack.db-shm
+logitrack.db-wal
+
+# macOS
+.DS_Store
+
+# pytest
+.pytest_cache/

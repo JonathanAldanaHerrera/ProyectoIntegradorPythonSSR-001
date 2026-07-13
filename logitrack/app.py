@@ -2,6 +2,7 @@ import tkinter as tk
 import tkinter.ttk as ttk
 
 from logitrack.controllers.envio_controller import EnvioController
+from logitrack.paths import get_db_path
 from logitrack.services.envio_service import EnvioRepository, EnvioService
 from logitrack.services.route_api_client import RouteApiClient
 from logitrack.services.sqlite_repository import SQLiteRepository
@@ -17,7 +18,7 @@ class Container:
         repo: EnvioRepository | None = None,
         cliente: RouteApiClient | None = None,
     ) -> None:
-        service = EnvioService(repo or SQLiteRepository("logitrack.db"))
+        service = EnvioService(repo or SQLiteRepository(str(get_db_path())))
         self.controller = EnvioController(service, cliente or RouteApiClient())
 
 
