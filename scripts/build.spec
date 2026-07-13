@@ -3,34 +3,35 @@
 import sys
 from pathlib import Path
 
-block_cipher = None
+# SPECPATH es el directorio que contiene este archivo (scripts/).
+# Su padre es la raíz del proyecto.
+PROJECT_ROOT = str(Path(SPECPATH).parent)
 
 a = Analysis(
-    ['../logitrack/__main__.py'],
-    pathex=[str(Path('.').resolve().parent)],
+    [str(Path(SPECPATH).parent / "logitrack" / "__main__.py")],
+    pathex=[PROJECT_ROOT],
     binaries=[],
     datas=[],
-    hiddenimports=['logitrack'],
+    hiddenimports=["logitrack"],
     hookspath=[],
     hooksconfig={},
     runtime_hooks=[],
     excludes=[
-        'matplotlib', 'numpy', 'pandas', 'scipy', 'PIL',
-        'unittest', 'xmlrpc', 'pydoc', 'doctest',
+        "matplotlib", "numpy", "pandas", "scipy", "PIL",
+        "unittest", "xmlrpc", "pydoc", "doctest",
     ],
     noarchive=False,
     optimize=0,
-    cipher=block_cipher,
 )
 
-pyz = PYZ(a.pure, a.zipped_data, cipher=block_cipher)
+pyz = PYZ(a.pure)
 
 exe = EXE(
     pyz,
     a.scripts,
     [],
     exclude_binaries=True,
-    name='LogiTrack',
+    name="LogiTrack",
     debug=False,
     bootloader_ignore_signals=False,
     strip=False,
@@ -46,20 +47,20 @@ coll = COLLECT(
     strip=False,
     upx=True,
     upx_exclude=[],
-    name='LogiTrack',
+    name="LogiTrack",
 )
 
-if sys.platform == 'darwin':
+if sys.platform == "darwin":
     app = BUNDLE(
         coll,
-        name='LogiTrack.app',
+        name="LogiTrack.app",
         icon=None,
-        bundle_identifier='com.logitrack.desktop',
+        bundle_identifier="com.logitrack.desktop",
         info_plist={
-            'CFBundleName': 'LogiTrack',
-            'CFBundleDisplayName': 'LogiTrack Desktop',
-            'CFBundleVersion': '1.0.0',
-            'CFBundleShortVersionString': '1.0.0',
-            'NSHighResolutionCapable': True,
+            "CFBundleName": "LogiTrack",
+            "CFBundleDisplayName": "LogiTrack Desktop",
+            "CFBundleVersion": "1.0.0",
+            "CFBundleShortVersionString": "1.0.0",
+            "NSHighResolutionCapable": True,
         },
     )
