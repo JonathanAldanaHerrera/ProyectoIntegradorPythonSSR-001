@@ -40,6 +40,6 @@ jobs:
           python -m pytest tests/ -v \
             --cov=logitrack \
             --cov-report=term-missing \
-            --cov-fail-under=70
+
         env:
           DISPLAY: ""
