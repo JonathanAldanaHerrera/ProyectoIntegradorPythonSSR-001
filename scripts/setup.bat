@@ -29,6 +29,6 @@ echo === Setup completado ===
 echo Activar entorno: .venv\Scripts\activate
 echo Ejecutar app:    python -m logitrack
 echo Ejecutar tests:  python -m pytest tests\ -v
-echo Generar build:   scripts\build.bat
+echo Generar build:   pyinstaller scripts\build.spec
 
 endlocal
