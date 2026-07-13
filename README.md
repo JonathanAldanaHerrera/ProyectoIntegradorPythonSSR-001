@@ -48,7 +48,7 @@ Las vistas nunca importan modelos directamente (verificado por tests AST).
 
 ```bash
 # 1. Clonar y entrar al proyecto
-git clone <url-del-repo>
+git clone https://github.com/JonathanAldanaHerrera/ProyectoIntegradorPythonSSR-001.git
 cd ProyectoIntegradorPythonSSR-001
 
 # 2. Setup del entorno (crea .venv e instala dependencias)
