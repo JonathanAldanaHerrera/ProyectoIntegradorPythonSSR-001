@@ -9,7 +9,7 @@ Reglas:
 import ast
 import pathlib
 
-BASE = pathlib.Path(__file__).parent.parent / "logitrack"
+BASE = pathlib.Path(__file__).parent.parent.parent / "logitrack"
 
 
 def _modulos_importados(path: pathlib.Path) -> list[str]:

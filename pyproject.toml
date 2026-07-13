@@ -1,0 +1,25 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.backends.legacy:build"
+
+[project]
+name = "logitrack"
+version = "1.0.0"
+description = "Aplicación de escritorio para registro y seguimiento de envíos logísticos"
+readme = "README.md"
+license = { file = "LICENSE" }
+authors = [{ name = "Jonathan Aldana", email = "jonathan.aldana170500@gmail.com" }]
+requires-python = ">=3.12"
+dependencies = ["requests>=2.31.0"]
+
+[project.scripts]
+logitrack = "logitrack.__main__:main"
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+python_files = ["test_*.py"]
+python_functions = ["test_*"]
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["logitrack*"]
